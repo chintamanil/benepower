@@ -2164,29 +2164,6 @@ flowchart LR
         <p>The written record said <strong>12</strong> failures. The measured value was <strong>18</strong>. Capturing a baseline from prose rather than from a run would have seeded the oracle with a wrong expected set and passed while six failures went unaccounted for.</p>
       </div>
     </div>
-
-    <div class="cards c2 rev">
-      <div class="card warn">
-        <div class="k">Capacity model · found by multiplying out</div>
-        <h3>The per-turn transcript sync listens for an event that no longer fires</h3>
-        <div class="mstrip">
-          <div class="m"><span class="mv amb">~86</span><span class="ml">Backend + S3 writes per call the design intended</span></div>
-          <div class="m"><span class="mv bad">0</span><span class="ml">That fire mid-call — <code>agent_speech_committed</code> is absent from livekit-agents 1.x events</span></div>
-          <div class="m"><span class="mv">~12</span><span class="ml">Backend requests per call actually made — handoffs and call end only</span></div>
-        </div>
-        <div class="appr"><b>Approach</b>
-          <ul>
-            <li>Sizing <strong>30k calls/quarter</strong> meant counting requests per call from code, not assuming them. The debounced sync in <code>assistant_agent.py</code> subscribes to a 0.x event name; the installed 1.3 SDK's <code>EventTypes</code> literal doesn't contain it.</li>
-            <li>Consequence runs both ways: backend load is <strong>~17× lower</strong> than designed (~4k vs ~70k requests/day), and a <strong>mid-call crash loses the transcript</strong> the backend was meant to hold.</li>
-            <li>Fix direction: subscribe to <code>conversation_item_added</code>, keep the 5 s debounce, and upload a <strong>delta</strong> rather than the full context — full re-upload grows quadratically with call length.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <div class="callout rev">
-      <p><strong>The caveats travel with the number — that is what makes it usable.</strong> One term in the target column is <em>estimated</em> rather than measured: the cache write. The usage logger has no <code>cacheWriteInputTokens</code> field, so today's telemetry <strong>structurally cannot capture it</strong> — which is exactly why "instrument the cache write" is a named work item in the plan instead of an assumption buried in a spreadsheet. I publish the <strong>realistic</strong> column, never the optimistic one, and I name the single input I can't yet close. A cost model that tells you which of its own inputs is weakest is one you can act on. One that doesn't is a slide.</p>
-    </div>
   </div>
 </section>
 
@@ -2282,15 +2259,6 @@ Progressive trim exhausted → falls through to DOB + name → succeeds</pre></d
       </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:40px">Lessons — the transferable ones</div>
-    <div class="cards c3 rev">
-      <div class="card warn"><div class="k">Lesson 1</div><h3>Silently ignored filters are worse than errors</h3><p>The query builder drops unknown parameters without warning. The endpoint <strong>appeared to work</strong> — 200, results returned — while filtering nothing. Declaring filters explicitly, or switching to strict mode, surfaces this instantly.</p></div>
-      <div class="card warn"><div class="k">Lesson 2</div><h3>No retry on a fire-and-forget lookup is permanent data loss</h3><p>One attempt, silent degradation on failure. The "the caller will provide it" assumption was <strong>false for this call type</strong> — and nobody re-checked the assumption when the code was reused.</p></div>
-      <div class="card warn"><div class="k">Lesson 3</div><h3>Behavior designed for one agent type leaks into others</h3><p>Auto-association made sense for concierge calls and was actively harmful on intake calls. Shared backends need <strong>agent-type awareness</strong> at the entry point, not just shared endpoints.</p></div>
-      <div class="card warn"><div class="k">Lesson 4</div><h3>Schema mismatches between services create quarantine traps</h3><p>The agent <em>allows</em> an empty subscriber DOB — deliberately, "unknown is better than wrong". The pipeline <em>rejects</em> it. Both are defensible in isolation; together they make a trap that only fires in production.</p></div>
-      <div class="card warn"><div class="k">Lesson 5</div><h3>A broken path can hide behind a working fallback</h3><p>Tier 0 failed on every call for months. Nobody noticed because Tier 2 always caught it — at ~6 seconds of added latency per call. <strong>Fallbacks need their own alarm.</strong></p></div>
-      <div class="card warn"><div class="k">Lesson 6</div><h3>Correct-looking data can be wrong data</h3><p>The census was structurally valid. A member's phone field just happened to contain a system number. Validation checked <em>shape</em>, not <em>plausibility</em> — hence the new data-quality rule.</p></div>
-    </div>
 
     <div class="seclabel rev" style="margin-top:48px">COE #2 · HIPAA Verification — Rebuilt to a 3-Factor Rule</div>
     <p class="sub rev" style="margin-bottom:18px">The second report is the other half of the story: after the verification tiers were reworked, a QA suite was run against every path — including the two that are supposed to <em>fail</em> closed.</p>
