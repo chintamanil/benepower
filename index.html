@@ -567,12 +567,12 @@
     <a href="#architecture">Platform</a>
     <a href="#eval">RAG Eval</a>
     <a href="#voice">Voice Agent</a>
+    <a href="#northstar">North Star</a>
     <a href="#ticketing">Ticketing</a>
     <a href="#migration">Celery → Airflow</a>
     <a href="#pipeline">HIPAA / X12</a>
     <a href="#integrity">Data Integrity</a>
     <a href="#metrics">Impact</a>
-    <a href="#northstar">North Star</a>
     <a href="#ownership">Ownership</a>
     <a href="#issues">Issues</a>
   </div>
@@ -837,6 +837,130 @@ sequenceDiagram
   </div>
 </section>
 
+<!-- NORTH STAR -->
+<section id="northstar">
+  <div class="wrap">
+    <div class="seclabel rev">The North Star</div>
+    <h2 class="rev">The Metric the Program Steers By</h2>
+    <p class="sub rev">The dashboard tracks two dozen metrics; most of them exist to explain movement in this one. It's deliberately the <strong>hardest</strong> to hit, because it only counts calls that produced a real, delivered EDI artifact — and its formula, denominator, and exclusions are all published below.</p>
+
+    <div class="formula rev">
+      <div class="eq">North Star &nbsp;=&nbsp; EDI files delivered &nbsp;÷&nbsp; <span class="den">eligible intake calls</span></div>
+      <div class="note"><strong>Numerator</strong> — a ticket whose status reached <code>INTAKE_DELIVERED</code>: the X12 278 was generated, transmitted, and acknowledged by the payer. Not "ticket created". Not "intake attempted". Delivered.</div>
+      <div class="note" style="margin-top:8px"><strong>Denominator</strong> — calls where the caller genuinely attempted an intake <em>and</em> we had what we needed to serve them. Calls we could never have completed are excluded, and the exclusion list is fixed and published.</div>
+    </div>
+
+    <div class="mrows rev" style="margin-top:20px">
+      <div class="mrow"><span class="mk">Calls evaluated by the pipeline — <em>all</em> intents</span><span class="mv n">~25,000</span></div>
+      <div class="mrow"><span class="mk">Less the six fixed exclusions + pending re-evaluation</span><span class="mv">~9,000 · ~36%</span></div>
+      <div class="mrow"><span class="mk"><strong>Eligible intake calls</strong> — the North Star denominator</span><span class="mv n">~16,000</span></div>
+      <div class="mrow"><span class="mk">X12 278 EDI files delivered — the numerator</span><span class="mv n">~10,000</span></div>
+      <div class="mrow"><span class="mk">North Star</span><span class="mv">~63% · goal line 60%</span></div>
+    </div>
+    <div class="mstrip rev" style="margin-top:18px">
+      <div class="m"><span class="mv">~10k</span><span class="ml">Numerator — identical in both rates</span></div>
+      <div class="m"><span class="mv">~40%</span><span class="ml">Against all ~25k calls — deflection</span></div>
+      <div class="m"><span class="mv">~63%</span><span class="ml">Against ~16k eligible — North Star</span></div>
+      <div class="m"><span class="mv sm">both shown</span><span class="ml">Neither rate is published alone</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Keep <strong>two rates on one numerator</strong> rather than picking the flattering denominator and defending it.</li>
+        <li>Print them <strong>adjacent</strong> — the smaller denominator is only credible while the bigger one sits next to it.</li>
+      </ul>
+    </div>
+    <p class="sub rev" style="margin-top:6px">Deflection counts every call that reached the line, including ones no agent could have converted; the North Star drops those by design. Same 10k EDIs, two honest readings.</p>
+
+    <div class="cards c2 rev" style="margin-top:26px">
+      <div class="card accent">
+        <div class="k">Included in the denominator</div>
+        <h3>Calls we were on the hook for</h3>
+        <p>Any call classified as intake intent where the member was resolvable and the caller stayed on the line to do the work. If we failed one of these, that is <strong>our</strong> miss and it counts against us.</p>
+        <div class="tie"><b>Why it's built this way</b>Inflating the denominator with unwinnable calls makes the number look bad and gets it ignored; shrinking it with excuses makes the number look good and gets it distrusted. Fixing the list <strong>in code</strong>, and printing it, kills both moves.</div>
+      </div>
+      <div class="card coral">
+        <div class="k">Excluded — and why</div>
+        <h3>Calls no agent could convert</h3>
+        <p>Six fixed exclusions, evaluated per call from the deterministic pipeline's <code>unverified_reason</code>:</p>
+        <div class="chiprow" style="margin-top:12px">
+          <span class="chip"><b>caller_hung_up</b></span>
+          <span class="chip"><b>web_form_redirect</b></span>
+          <span class="chip"><b>provider_no_member_data</b></span>
+          <span class="chip"><b>member_terminated</b></span>
+          <span class="chip"><b>not_in_census_feed</b></span>
+          <span class="chip"><b>not_in_census</b></span>
+        </div>
+        <div class="tie"><b>Also excluded</b>Calls still <strong>pending re-evaluation</strong> — a ticket mid-flight isn't a failure yet, and counting it as one would make every day look worse than it was until the backlog cleared.</div>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:46px">What "60%" Means</div>
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">6 / 10</span><span class="ml">Eligible calls that must end in a delivered EDI</span></div>
+      <div class="m"><span class="mv">5</span><span class="ml">Round-trip steps the commitment spans</span></div>
+      <div class="m"><span class="mv sm">daily</span><span class="ml">Cadence the gap is visible at, not quarterly</span></div>
+      <div class="m"><span class="mv sm">throughput</span><span class="ml">Not a quality pass mark, not a ceiling</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Set the bar on the <strong>full round trip</strong> — verify member → capture clinical detail → generate the 278 → transmit → get it acknowledged. Anything short of acknowledged doesn't count.</li>
+        <li>Render it as a <strong>fixed dashed line</strong> on the trend chart, so the gap is legible on any given day rather than reconstructed at quarter-end.</li>
+      </ul>
+    </div>
+    <p class="sub rev" style="margin-bottom:20px">In plain terms: of every 10 calls where a caller genuinely tried to complete an intake and we had the data to serve them, at least 6 end with a file in the payer's hands.</p>
+
+    <div class="chartbox rev">
+      <div class="chead">
+        <span>north star daily trend · Mar → Jun · vs. 60% SMART goal</span>
+        <span class="illus">7-day volume-weighted</span>
+      </div>
+      <div class="cbody"><svg id="nsChart" viewBox="0 0 900 360" role="img" aria-label="North Star trend from March to June crossing the 60 percent SMART goal in May"></svg></div>
+      <div class="legend">
+        <span><i style="background:#00e5a0"></i> North Star %, 7-day volume-weighted</span>
+        <span><i class="dash"></i> 60% SMART goal</span>
+        <span><i class="bar"></i> Eligible intake volume</span>
+      </div>
+    </div>
+    <p class="sub rev" style="margin-top:14px;font-size:14px;color:var(--muted2)">Volumes throughout this page are rounded to order of magnitude and carry no client identifier.</p>
+
+    <div class="cards c3 rev" style="margin-top:30px">
+      <div class="card accent">
+        <div class="k">Mar</div><h3>Baseline &amp; instrumentation</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv amb">high 30s</span><span class="ml">First computable rate</span></div>
+          <div class="m"><span class="mv sm">census</span><span class="ml">Top cause — not agent behavior</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul><li>Ship the measurement before the fix, and let the <strong>root-cause split</strong> prove where the gap sits instead of asserting it.</li></ul>
+        </div>
+        <p>The pipeline goes live and the number becomes computable for the first time.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">Apr</div><h3>Attacking the top bucket</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv">50s</span><span class="ml">Rate through the month</span></div>
+          <div class="m"><span class="mv">2</span><span class="ml">Buckets worked: census gap, wrong ID type</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul><li>Rank failure buckets <strong>by volume</strong> and work them in that order — the sprint is chosen by the data, not by argument.</li></ul>
+        </div>
+        <p>The rate climbs steadily as the largest named cause shrinks.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">May → Jun</div><h3>Crossing and holding</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv">60%</span><span class="ml">Crossed in May</span></div>
+          <div class="m"><span class="mv">~65%</span><span class="ml">Settled through June</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul><li>Treat a <strong>full month above the line</strong> — not a single touch of it — as the bar for calling the goal met.</li></ul>
+        </div>
+        <p>Holding, rather than crossing, is what turned the target from aspiration into baseline.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- TICKETING -->
 <section id="ticketing">
   <div class="wrap">
@@ -1091,130 +1215,6 @@ flowchart LR
       <span class="chip"><b>asr_robustness</b></span>
       <span class="chip"><b>quality_gate_verdict</b></span>
       <span class="chip"><b>task_completion_rate</b></span>
-    </div>
-  </div>
-</section>
-
-<!-- NORTH STAR -->
-<section id="northstar">
-  <div class="wrap">
-    <div class="seclabel rev">The North Star</div>
-    <h2 class="rev">The Metric the Program Steers By</h2>
-    <p class="sub rev">The dashboard tracks two dozen metrics; most of them exist to explain movement in this one. It's deliberately the <strong>hardest</strong> to hit, because it only counts calls that produced a real, delivered EDI artifact — and its formula, denominator, and exclusions are all published below.</p>
-
-    <div class="formula rev">
-      <div class="eq">North Star &nbsp;=&nbsp; EDI files delivered &nbsp;÷&nbsp; <span class="den">eligible intake calls</span></div>
-      <div class="note"><strong>Numerator</strong> — a ticket whose status reached <code>INTAKE_DELIVERED</code>: the X12 278 was generated, transmitted, and acknowledged by the payer. Not "ticket created". Not "intake attempted". Delivered.</div>
-      <div class="note" style="margin-top:8px"><strong>Denominator</strong> — calls where the caller genuinely attempted an intake <em>and</em> we had what we needed to serve them. Calls we could never have completed are excluded, and the exclusion list is fixed and published.</div>
-    </div>
-
-    <div class="mrows rev" style="margin-top:20px">
-      <div class="mrow"><span class="mk">Calls evaluated by the pipeline — <em>all</em> intents</span><span class="mv n">~25,000</span></div>
-      <div class="mrow"><span class="mk">Less the six fixed exclusions + pending re-evaluation</span><span class="mv">~9,000 · ~36%</span></div>
-      <div class="mrow"><span class="mk"><strong>Eligible intake calls</strong> — the North Star denominator</span><span class="mv n">~16,000</span></div>
-      <div class="mrow"><span class="mk">X12 278 EDI files delivered — the numerator</span><span class="mv n">~10,000</span></div>
-      <div class="mrow"><span class="mk">North Star</span><span class="mv">~63% · goal line 60%</span></div>
-    </div>
-    <div class="mstrip rev" style="margin-top:18px">
-      <div class="m"><span class="mv">~10k</span><span class="ml">Numerator — identical in both rates</span></div>
-      <div class="m"><span class="mv">~40%</span><span class="ml">Against all ~25k calls — deflection</span></div>
-      <div class="m"><span class="mv">~63%</span><span class="ml">Against ~16k eligible — North Star</span></div>
-      <div class="m"><span class="mv sm">both shown</span><span class="ml">Neither rate is published alone</span></div>
-    </div>
-    <div class="appr rev"><b>Approach</b>
-      <ul>
-        <li>Keep <strong>two rates on one numerator</strong> rather than picking the flattering denominator and defending it.</li>
-        <li>Print them <strong>adjacent</strong> — the smaller denominator is only credible while the bigger one sits next to it.</li>
-      </ul>
-    </div>
-    <p class="sub rev" style="margin-top:6px">Deflection counts every call that reached the line, including ones no agent could have converted; the North Star drops those by design. Same 10k EDIs, two honest readings.</p>
-
-    <div class="cards c2 rev" style="margin-top:26px">
-      <div class="card accent">
-        <div class="k">Included in the denominator</div>
-        <h3>Calls we were on the hook for</h3>
-        <p>Any call classified as intake intent where the member was resolvable and the caller stayed on the line to do the work. If we failed one of these, that is <strong>our</strong> miss and it counts against us.</p>
-        <div class="tie"><b>Why it's built this way</b>Inflating the denominator with unwinnable calls makes the number look bad and gets it ignored; shrinking it with excuses makes the number look good and gets it distrusted. Fixing the list <strong>in code</strong>, and printing it, kills both moves.</div>
-      </div>
-      <div class="card coral">
-        <div class="k">Excluded — and why</div>
-        <h3>Calls no agent could convert</h3>
-        <p>Six fixed exclusions, evaluated per call from the deterministic pipeline's <code>unverified_reason</code>:</p>
-        <div class="chiprow" style="margin-top:12px">
-          <span class="chip"><b>caller_hung_up</b></span>
-          <span class="chip"><b>web_form_redirect</b></span>
-          <span class="chip"><b>provider_no_member_data</b></span>
-          <span class="chip"><b>member_terminated</b></span>
-          <span class="chip"><b>not_in_census_feed</b></span>
-          <span class="chip"><b>not_in_census</b></span>
-        </div>
-        <div class="tie"><b>Also excluded</b>Calls still <strong>pending re-evaluation</strong> — a ticket mid-flight isn't a failure yet, and counting it as one would make every day look worse than it was until the backlog cleared.</div>
-      </div>
-    </div>
-
-    <div class="seclabel rev" style="margin-top:46px">What "60%" Means</div>
-    <div class="mstrip rev">
-      <div class="m"><span class="mv">6 / 10</span><span class="ml">Eligible calls that must end in a delivered EDI</span></div>
-      <div class="m"><span class="mv">5</span><span class="ml">Round-trip steps the commitment spans</span></div>
-      <div class="m"><span class="mv sm">daily</span><span class="ml">Cadence the gap is visible at, not quarterly</span></div>
-      <div class="m"><span class="mv sm">throughput</span><span class="ml">Not a quality pass mark, not a ceiling</span></div>
-    </div>
-    <div class="appr rev"><b>Approach</b>
-      <ul>
-        <li>Set the bar on the <strong>full round trip</strong> — verify member → capture clinical detail → generate the 278 → transmit → get it acknowledged. Anything short of acknowledged doesn't count.</li>
-        <li>Render it as a <strong>fixed dashed line</strong> on the trend chart, so the gap is legible on any given day rather than reconstructed at quarter-end.</li>
-      </ul>
-    </div>
-    <p class="sub rev" style="margin-bottom:20px">In plain terms: of every 10 calls where a caller genuinely tried to complete an intake and we had the data to serve them, at least 6 end with a file in the payer's hands.</p>
-
-    <div class="chartbox rev">
-      <div class="chead">
-        <span>north star daily trend · Mar → Jun · vs. 60% SMART goal</span>
-        <span class="illus">7-day volume-weighted</span>
-      </div>
-      <div class="cbody"><svg id="nsChart" viewBox="0 0 900 360" role="img" aria-label="North Star trend from March to June crossing the 60 percent SMART goal in May"></svg></div>
-      <div class="legend">
-        <span><i style="background:#00e5a0"></i> North Star %, 7-day volume-weighted</span>
-        <span><i class="dash"></i> 60% SMART goal</span>
-        <span><i class="bar"></i> Eligible intake volume</span>
-      </div>
-    </div>
-    <p class="sub rev" style="margin-top:14px;font-size:14px;color:var(--muted2)">Volumes throughout this page are rounded to order of magnitude and carry no client identifier.</p>
-
-    <div class="cards c3 rev" style="margin-top:30px">
-      <div class="card accent">
-        <div class="k">Mar</div><h3>Baseline &amp; instrumentation</h3>
-        <div class="mstrip">
-          <div class="m"><span class="mv amb">high 30s</span><span class="ml">First computable rate</span></div>
-          <div class="m"><span class="mv sm">census</span><span class="ml">Top cause — not agent behavior</span></div>
-        </div>
-        <div class="appr"><b>Approach</b>
-          <ul><li>Ship the measurement before the fix, and let the <strong>root-cause split</strong> prove where the gap sits instead of asserting it.</li></ul>
-        </div>
-        <p>The pipeline goes live and the number becomes computable for the first time.</p>
-      </div>
-      <div class="card accent">
-        <div class="k">Apr</div><h3>Attacking the top bucket</h3>
-        <div class="mstrip">
-          <div class="m"><span class="mv">50s</span><span class="ml">Rate through the month</span></div>
-          <div class="m"><span class="mv">2</span><span class="ml">Buckets worked: census gap, wrong ID type</span></div>
-        </div>
-        <div class="appr"><b>Approach</b>
-          <ul><li>Rank failure buckets <strong>by volume</strong> and work them in that order — the sprint is chosen by the data, not by argument.</li></ul>
-        </div>
-        <p>The rate climbs steadily as the largest named cause shrinks.</p>
-      </div>
-      <div class="card accent">
-        <div class="k">May → Jun</div><h3>Crossing and holding</h3>
-        <div class="mstrip">
-          <div class="m"><span class="mv">60%</span><span class="ml">Crossed in May</span></div>
-          <div class="m"><span class="mv">~65%</span><span class="ml">Settled through June</span></div>
-        </div>
-        <div class="appr"><b>Approach</b>
-          <ul><li>Treat a <strong>full month above the line</strong> — not a single touch of it — as the bar for calling the goal met.</li></ul>
-        </div>
-        <p>Holding, rather than crossing, is what turned the target from aspiration into baseline.</p>
-      </div>
     </div>
   </div>
 </section>
