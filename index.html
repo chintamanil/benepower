@@ -580,7 +580,7 @@
 
 <header>
   <div class="wrap">
-    <span class="role">Part I · Architect · BenePower</span>
+    <span class="role">Architect · BenePower</span>
     <h1 class="hero">CONVERSATIONAL<br><span class="g">BENEFITS, BY AGENT</span></h1>
     <p class="lede">I architected an <strong>AI-powered agentic platform</strong> that lets members and providers ask natural-language questions about their <strong>benefits, eligibility, and coverage</strong> — scaling the architecture from <strong>0 to 1.2M+ onboarded users</strong>.</p>
     <p class="lede">A <strong>multimodal, multi-agent RAG</strong> system over text, image, and voice — real-time conversational AI on <strong>LiveKit WebRTC + AWS Transcribe</strong>, with agents orchestrated in <strong>LangChain, LangGraph, and LangSmith</strong> over <strong>OpenAI and AWS Bedrock</strong> and backed by Redis short-term memory. It's fronted by a HIPAA-compliant <strong>Django</strong> backend — an agent-driven support-ticketing system, a Bedrock-native RAG evaluation harness, and a <strong>Celery → Airflow</strong> data platform on AWS (RDS · Lambda · SNS · S3 · CDK) with a <strong>Vue + Vite</strong> frontend — all of which I owned end to end.</p>
@@ -1268,7 +1268,7 @@ flowchart LR
 
 <header id="issues" class="part">
   <div class="wrap">
-    <span class="role">Part II · Production Issues · Voice Intake Agent</span>
+    <span class="role">Production Issues · Voice Intake Agent</span>
     <h1 class="hero">THE BUGS THAT ONLY<br><span class="g">EXIST ON THE PHONE</span></h1>
     <p class="lede">A voice agent taking precertification intake for <strong>a TPA client</strong> fails in ways no other software does. The transcript says one thing and the audio says another. A caller reads a member ID and four different systems disagree about what they heard. A dash gets pronounced as the digit two, and a CSR writes down the wrong ticket number.</p>
     <p class="lede">This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how we found it, and the dictionaries and configs that now hold the fixes in place. Plus two production correction-of-error reports, and the debugging process that turned "Sally isn't working" into a ticket with an owner.</p>
