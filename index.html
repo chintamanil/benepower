@@ -1280,7 +1280,7 @@ flowchart LR
       <div class="stat"><div class="n sm">Listening loop</div><div class="l">Some defects are invisible in logs and transcripts. You have to hear them</div></div>
       <div class="stat"><div class="n sm">$1.30 → $0.76</div><div class="l">AWS cost per intake call — priced from billed usage, with a costed path to &minus;42%</div></div>
     </div>
-    <div class="partnav rev"><a href="#attribution">Attribution</a><a href="#stt">STT</a><a href="#tts">TTS</a><a href="#dictionaries">Dictionaries</a><a href="#cost">Cost / Latency</a><a href="#tco">Priced Stack</a><a href="#coe">Production COEs</a><a href="#process">Debug Process</a><a href="#framework">Build / Own</a></div>
+    <div class="partnav rev"><a href="#attribution">Attribution</a><a href="#stt">STT</a><a href="#tts">TTS</a><a href="#dictionaries">Dictionaries</a><a href="#cost">Cost / Latency</a><a href="#tco">Priced Stack</a><a href="#coe">Production COEs</a><a href="#framework">Build / Own</a></div>
   </div>
 </header>
 <div class="deep">
@@ -2312,61 +2312,6 @@ Progressive trim exhausted → falls through to DOB + name → succeeds</pre></d
         <p>A QA caller agent drives these scenarios by phone. It was <strong>failing valid calls</strong> because the agent read back <em>"C as in Charlie"</em> where the scenario expected a different phonetic word for the same letter — and the harness compared the phonetic words rather than the letters they encode.</p>
         <div class="tie bad"><b>Worth stating plainly</b>A test that fails for the wrong reason is worse than no test — it trains the team to ignore red. The fix was to compare what the readback <em>means</em>, not how it was <em>spoken</em>.</div>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- PROCESS -->
-<section id="process">
-  <div class="wrap">
-    <div class="seclabel rev">How We Found Them</div>
-    <h2 class="rev">The Debugging Process</h2>
-    <p class="sub rev">Voice agents defeat normal debugging in a specific way: the highest-value evidence is <strong>audio</strong>, which is not greppable, not diffable, and not in your logs. The process below is built around that constraint.</p>
-
-    <div class="mstrip rev">
-      <div class="m"><span class="mv">2</span><span class="ml">Artifacts captured per call</span></div>
-      <div class="m"><span class="mv">4 → 1</span><span class="ml">Candidate layers, after one question</span></div>
-      <div class="m"><span class="mv">6</span><span class="ml">Steps, same order every time</span></div>
-      <div class="m"><span class="mv">1</span><span class="ml">Ticket pinned to every QA scenario</span></div>
-      <div class="m"><span class="mv sm">audio-only</span><span class="ml">Defect class no text artifact can reveal</span></div>
-    </div>
-    <div class="appr rev"><b>Approach</b>
-      <ul>
-        <li><strong>Route before reading.</strong> Answer "is the value in the transcript, and on which side?" first — it collapses four candidate layers to one in seconds.</li>
-        <li>Budget for <strong>scheduled human listening</strong>, not just logging; some defects exist only in rendered audio.</li>
-        <li>Reproduce <strong>by phone</strong>, not by unit test — a scripted caller agent turns each fixed bug into a permanent scenario.</li>
-        <li>Push the 5-Whys until the answer is a <strong>design decision</strong>, then write the lesson at that level.</li>
-      </ul>
-    </div>
-
-    <div class="cards c3 rev">
-      <div class="card accent"><div class="k">Step 1 · Capture both artifacts</div><h3>Transcript ≠ audio</h3><p>Every call stores the full <strong>transcript</strong> — both sides, the caller's words and the agent's own — plus the <strong>recording</strong>. The transcript is what got written down; the recording is what got rendered. They disagree more often than you would expect, and that disagreement is the diagnosis.</p></div>
-      <div class="card accent"><div class="k">Step 2 · Route before reading</div><h3>Answer the attribution question first</h3><p>"Is the correct value in the transcript, and on which side?" is answerable in seconds, and it eliminates three of the four candidate layers immediately. Skipping this step is what produced months of prompt-tuning for code bugs.</p></div>
-      <div class="card accent"><div class="k">Step 3 · Listen</div><h3>A listening loop, not a logging loop</h3><p>The hyphen-as-"two" bug is invisible in every text artifact — both sides of the pipeline agree the character is a hyphen. It exists only in rendered audio. Some percentage of call recordings has to be <strong>heard by a person</strong>, on a schedule, or this class of defect is undetectable.</p></div>
-      <div class="card accent"><div class="k">Step 4 · Reproduce by phone</div><h3>A QA caller agent, scenarios as YAML</h3><p>Regressions are reproduced by an automated caller that dials the agent and plays a scripted scenario — declared in YAML with given / when / then. Each scenario carries the ticket it came from, so a fixed bug becomes a permanent test.</p></div>
-      <div class="card accent"><div class="k">Step 5 · Fix at the right layer</div><h3>Prompt for intent, code for invariants</h3><p>If the property is compliance or data integrity, it goes in code — a prompt can only ask. If it's phrasing or style, it goes in the prompt, where it's cheap to iterate. Several fixes needed both, and saying which half does what is part of the fix.</p></div>
-      <div class="card accent"><div class="k">Step 6 · Write the COE</div><h3>Whys until it stops being a bug</h3><p>Keep asking why until the answer is a <strong>design decision</strong> rather than a defect — "this was inherited from the admin search pattern", "this was designed for a different agent type". That's where the transferable lesson lives, and it's usually three whys past where it's tempting to stop.</p></div>
-    </div>
-
-    <div class="seclabel rev" style="margin-top:44px">The COE Template</div>
-    <div class="diagram rev">
-      <div class="dhead"><span>correction of error · same structure every time</span><span class="tag">evidence before narrative</span></div>
-      <div class="body">
-<pre class="mermaid">
-flowchart LR
-  classDef a fill:#0f2340,stroke:#1e4d8c,color:#fff
-  classDef b fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-  classDef c fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
-
-  E["Evidence<br/>logs · payloads · timeline"]:::a --> W["5-Whys<br/>until it's a design decision"]:::b
-  W --> F["Fixes<br/>owner + priority each"]:::b
-  F --> A["Action items<br/>tracked, not narrated"]:::c
-  A --> L["Lessons<br/>generalizable only"]:::c
-</pre>
-      </div>
-    </div>
-    <div class="callout rev">
-      <p><strong>Two rules that keep a COE honest.</strong> Evidence comes <em>before</em> the narrative — raw logs and payloads first, so the story has to fit the data rather than the data being selected to fit the story. And every fix carries a <strong>named owner and a priority</strong>; a fix without an owner is a wish. The lessons section only accepts findings that generalize beyond the incident — anything specific to this bug already lives in the fix.</p>
     </div>
   </div>
 </section>
