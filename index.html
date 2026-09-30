@@ -497,7 +497,48 @@
   .rev{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
   .rev.in{opacity:1;transform:none}
 
+  /* FORMULA BLOCK */
+  .formula{
+    border:1px solid var(--accent-dim);border-radius:14px;background:rgba(0,229,160,.04);
+    padding:22px 24px;margin:18px 0;
+  }
+  .formula .eq{
+    font-family:var(--mono);font-size:clamp(14px,2vw,19px);color:var(--accent);
+    letter-spacing:-.2px;line-height:1.7;margin-bottom:14px;word-break:break-word;
+  }
+  .formula .eq .den{color:var(--coral)}
+  .formula .note{font-size:13.5px;color:var(--muted)}
+  .formula .note strong{color:var(--txt)}
+
+  /* CHART */
+  .chartbox{border:1px solid var(--line);border-radius:16px;background:var(--bg2);overflow:hidden;margin:18px 0}
+  .chartbox .chead{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    padding:11px 18px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:11.5px;letter-spacing:1px;color:var(--muted);
+    background:linear-gradient(180deg,rgba(15,26,48,.6),transparent);
+  }
+  .chartbox .chead .illus{
+    color:var(--amber);border:1px solid rgba(245,166,35,.45);background:rgba(245,166,35,.10);
+    border-radius:20px;padding:2px 10px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;
+  }
+  .chartbox .cbody{padding:20px 16px 12px;overflow-x:auto}
+  .chartbox svg{display:block;min-width:620px;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;padding:0 20px 18px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .legend i{width:16px;height:2.5px;border-radius:2px;display:inline-block}
+  .legend i.dash{background:repeating-linear-gradient(90deg,var(--accent) 0 5px,transparent 5px 9px)}
+  .legend i.bar{height:10px;width:9px;border-radius:2px;background:rgba(76,140,255,.30)}
+  .mrows{display:grid;gap:1px;margin:14px 0 4px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .mrow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:baseline;padding:9px 13px;background:var(--bg2)}
+  .mrow .mk{font-size:13px;color:var(--muted)}
+  .mrow .mv{font-family:var(--mono);font-size:12.5px;color:var(--accent);text-align:right;font-weight:600;white-space:nowrap}
+  .mrow .mv.n{color:var(--txt)}
+  @media(max-width:520px){.mrow{grid-template-columns:1fr}.mrow .mv{text-align:left}}
+
   /* merged-page additions */
+  .navlinks{gap:14px}
+  nav{gap:20px}
   .tbl{overflow-x:auto}
   .deep table{min-width:620px}
   .deep .card.warn{border-color:rgba(245,166,35,.4)}
@@ -531,6 +572,7 @@
     <a href="#pipeline">HIPAA / X12</a>
     <a href="#integrity">Data Integrity</a>
     <a href="#metrics">Impact</a>
+    <a href="#northstar">North Star</a>
     <a href="#ownership">Ownership</a>
     <a href="#issues">Issues</a>
   </div>
@@ -1049,6 +1091,130 @@ flowchart LR
       <span class="chip"><b>asr_robustness</b></span>
       <span class="chip"><b>quality_gate_verdict</b></span>
       <span class="chip"><b>task_completion_rate</b></span>
+    </div>
+  </div>
+</section>
+
+<!-- NORTH STAR -->
+<section id="northstar">
+  <div class="wrap">
+    <div class="seclabel rev">The North Star</div>
+    <h2 class="rev">The Metric the Program Steers By</h2>
+    <p class="sub rev">The dashboard tracks two dozen metrics; most of them exist to explain movement in this one. It's deliberately the <strong>hardest</strong> to hit, because it only counts calls that produced a real, delivered EDI artifact — and its formula, denominator, and exclusions are all published below.</p>
+
+    <div class="formula rev">
+      <div class="eq">North Star &nbsp;=&nbsp; EDI files delivered &nbsp;÷&nbsp; <span class="den">eligible intake calls</span></div>
+      <div class="note"><strong>Numerator</strong> — a ticket whose status reached <code>INTAKE_DELIVERED</code>: the X12 278 was generated, transmitted, and acknowledged by the payer. Not "ticket created". Not "intake attempted". Delivered.</div>
+      <div class="note" style="margin-top:8px"><strong>Denominator</strong> — calls where the caller genuinely attempted an intake <em>and</em> we had what we needed to serve them. Calls we could never have completed are excluded, and the exclusion list is fixed and published.</div>
+    </div>
+
+    <div class="mrows rev" style="margin-top:20px">
+      <div class="mrow"><span class="mk">Calls evaluated by the pipeline — <em>all</em> intents</span><span class="mv n">~25,000</span></div>
+      <div class="mrow"><span class="mk">Less the six fixed exclusions + pending re-evaluation</span><span class="mv">~9,000 · ~36%</span></div>
+      <div class="mrow"><span class="mk"><strong>Eligible intake calls</strong> — the North Star denominator</span><span class="mv n">~16,000</span></div>
+      <div class="mrow"><span class="mk">X12 278 EDI files delivered — the numerator</span><span class="mv n">~10,000</span></div>
+      <div class="mrow"><span class="mk">North Star</span><span class="mv">~63% · goal line 60%</span></div>
+    </div>
+    <div class="mstrip rev" style="margin-top:18px">
+      <div class="m"><span class="mv">~10k</span><span class="ml">Numerator — identical in both rates</span></div>
+      <div class="m"><span class="mv">~40%</span><span class="ml">Against all ~25k calls — deflection</span></div>
+      <div class="m"><span class="mv">~63%</span><span class="ml">Against ~16k eligible — North Star</span></div>
+      <div class="m"><span class="mv sm">both shown</span><span class="ml">Neither rate is published alone</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Keep <strong>two rates on one numerator</strong> rather than picking the flattering denominator and defending it.</li>
+        <li>Print them <strong>adjacent</strong> — the smaller denominator is only credible while the bigger one sits next to it.</li>
+      </ul>
+    </div>
+    <p class="sub rev" style="margin-top:6px">Deflection counts every call that reached the line, including ones no agent could have converted; the North Star drops those by design. Same 10k EDIs, two honest readings.</p>
+
+    <div class="cards c2 rev" style="margin-top:26px">
+      <div class="card accent">
+        <div class="k">Included in the denominator</div>
+        <h3>Calls we were on the hook for</h3>
+        <p>Any call classified as intake intent where the member was resolvable and the caller stayed on the line to do the work. If we failed one of these, that is <strong>our</strong> miss and it counts against us.</p>
+        <div class="tie"><b>Why it's built this way</b>Inflating the denominator with unwinnable calls makes the number look bad and gets it ignored; shrinking it with excuses makes the number look good and gets it distrusted. Fixing the list <strong>in code</strong>, and printing it, kills both moves.</div>
+      </div>
+      <div class="card coral">
+        <div class="k">Excluded — and why</div>
+        <h3>Calls no agent could convert</h3>
+        <p>Six fixed exclusions, evaluated per call from the deterministic pipeline's <code>unverified_reason</code>:</p>
+        <div class="chiprow" style="margin-top:12px">
+          <span class="chip"><b>caller_hung_up</b></span>
+          <span class="chip"><b>web_form_redirect</b></span>
+          <span class="chip"><b>provider_no_member_data</b></span>
+          <span class="chip"><b>member_terminated</b></span>
+          <span class="chip"><b>not_in_census_feed</b></span>
+          <span class="chip"><b>not_in_census</b></span>
+        </div>
+        <div class="tie"><b>Also excluded</b>Calls still <strong>pending re-evaluation</strong> — a ticket mid-flight isn't a failure yet, and counting it as one would make every day look worse than it was until the backlog cleared.</div>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:46px">What "60%" Means</div>
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">6 / 10</span><span class="ml">Eligible calls that must end in a delivered EDI</span></div>
+      <div class="m"><span class="mv">5</span><span class="ml">Round-trip steps the commitment spans</span></div>
+      <div class="m"><span class="mv sm">daily</span><span class="ml">Cadence the gap is visible at, not quarterly</span></div>
+      <div class="m"><span class="mv sm">throughput</span><span class="ml">Not a quality pass mark, not a ceiling</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Set the bar on the <strong>full round trip</strong> — verify member → capture clinical detail → generate the 278 → transmit → get it acknowledged. Anything short of acknowledged doesn't count.</li>
+        <li>Render it as a <strong>fixed dashed line</strong> on the trend chart, so the gap is legible on any given day rather than reconstructed at quarter-end.</li>
+      </ul>
+    </div>
+    <p class="sub rev" style="margin-bottom:20px">In plain terms: of every 10 calls where a caller genuinely tried to complete an intake and we had the data to serve them, at least 6 end with a file in the payer's hands.</p>
+
+    <div class="chartbox rev">
+      <div class="chead">
+        <span>north star daily trend · Mar → Jun · vs. 60% SMART goal</span>
+        <span class="illus">7-day volume-weighted</span>
+      </div>
+      <div class="cbody"><svg id="nsChart" viewBox="0 0 900 360" role="img" aria-label="North Star trend from March to June crossing the 60 percent SMART goal in May"></svg></div>
+      <div class="legend">
+        <span><i style="background:#00e5a0"></i> North Star %, 7-day volume-weighted</span>
+        <span><i class="dash"></i> 60% SMART goal</span>
+        <span><i class="bar"></i> Eligible intake volume</span>
+      </div>
+    </div>
+    <p class="sub rev" style="margin-top:14px;font-size:14px;color:var(--muted2)">Volumes throughout this page are rounded to order of magnitude and carry no client identifier.</p>
+
+    <div class="cards c3 rev" style="margin-top:30px">
+      <div class="card accent">
+        <div class="k">Mar</div><h3>Baseline &amp; instrumentation</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv amb">high 30s</span><span class="ml">First computable rate</span></div>
+          <div class="m"><span class="mv sm">census</span><span class="ml">Top cause — not agent behavior</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul><li>Ship the measurement before the fix, and let the <strong>root-cause split</strong> prove where the gap sits instead of asserting it.</li></ul>
+        </div>
+        <p>The pipeline goes live and the number becomes computable for the first time.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">Apr</div><h3>Attacking the top bucket</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv">50s</span><span class="ml">Rate through the month</span></div>
+          <div class="m"><span class="mv">2</span><span class="ml">Buckets worked: census gap, wrong ID type</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul><li>Rank failure buckets <strong>by volume</strong> and work them in that order — the sprint is chosen by the data, not by argument.</li></ul>
+        </div>
+        <p>The rate climbs steadily as the largest named cause shrinks.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">May → Jun</div><h3>Crossing and holding</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv">60%</span><span class="ml">Crossed in May</span></div>
+          <div class="m"><span class="mv">~65%</span><span class="ml">Settled through June</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul><li>Treat a <strong>full month above the line</strong> — not a single touch of it — as the bar for calling the goal met.</li></ul>
+        </div>
+        <p>Holding, rather than crossing, is what turned the target from aspiration into baseline.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -2382,6 +2548,92 @@ flowchart LR
       attributeBackgroundColorEven:'#0b1120'
     }
   });
+
+  /* ---- North Star trend chart ---- */
+  (function(){
+    // Weekly points, Mar -> Jun: steady climb, crosses the 60% SMART
+    // goal in May, settles ~65% through June.
+    const SERIES = [
+      {w:'Mar 1', pct:38, vol:520},{w:'Mar 2', pct:41, vol:590},{w:'Mar 3', pct:44, vol:640},{w:'Mar 4', pct:47, vol:700},
+      {w:'Apr 1', pct:49, vol:760},{w:'Apr 2', pct:52, vol:820},{w:'Apr 3', pct:55, vol:880},{w:'Apr 4', pct:57, vol:930},
+      {w:'May 1', pct:59, vol:1010},{w:'May 2', pct:61, vol:1080},{w:'May 3', pct:63, vol:1140},{w:'May 4', pct:64, vol:1190},
+      {w:'Jun 1', pct:65, vol:1260},{w:'Jun 2', pct:66, vol:1300},{w:'Jun 3', pct:65, vol:1340},{w:'Jun 4', pct:66, vol:1390}
+    ];
+    const GOAL = 60;
+
+    const W=900, H=360, PL=52, PR=22, PT=22, PB=52;
+    const iw = W-PL-PR, ih = H-PT-PB;
+    const yMax = 80, volMax = 1600;
+
+    const x = i => PL + (iw/(SERIES.length-1))*i;
+    const y = v => PT + ih - (v/yMax)*ih;
+    const yVol = v => (v/volMax)*ih;
+
+    const svg = document.getElementById('nsChart');
+    if(!svg) return;
+    const NS='http://www.w3.org/2000/svg';
+    const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+    const frag=document.createDocumentFragment();
+
+    // horizontal gridlines + y labels
+    for(let v=0; v<=yMax; v+=20){
+      frag.appendChild(el('line',{x1:PL,x2:W-PR,y1:y(v),y2:y(v),stroke:'#1c3252','stroke-width':1}));
+      const t=el('text',{x:PL-10,y:y(v)+4,'text-anchor':'end',fill:'#95aac6','font-family':'IBM Plex Mono, monospace','font-size':11});
+      t.textContent=v+'%'; frag.appendChild(t);
+    }
+
+    // volume bars (behind the line)
+    const bw = Math.max(6, (iw/SERIES.length)*0.46);
+    SERIES.forEach((d,i)=>{
+      const h = yVol(d.vol);
+      frag.appendChild(el('rect',{x:x(i)-bw/2, y:PT+ih-h, width:bw, height:h, rx:2, fill:'rgba(76,140,255,.16)'}));
+    });
+
+    // 60% goal line
+    frag.appendChild(el('line',{x1:PL,x2:W-PR,y1:y(GOAL),y2:y(GOAL),stroke:'#00e5a0','stroke-width':1.6,'stroke-dasharray':'6 5',opacity:.85}));
+    const gl=el('text',{x:PL+8,y:y(GOAL)-9,'text-anchor':'start',fill:'#00e5a0','font-family':'IBM Plex Mono, monospace','font-size':11.5,'font-weight':600});
+    gl.textContent='60% SMART goal'; frag.appendChild(gl);
+
+    // area fill under the trend
+    let area = `M ${x(0)} ${PT+ih}`;
+    SERIES.forEach((d,i)=>{ area += ` L ${x(i)} ${y(d.pct)}`; });
+    area += ` L ${x(SERIES.length-1)} ${PT+ih} Z`;
+    const grad = el('linearGradient',{id:'nsFill',x1:'0',y1:'0',x2:'0',y2:'1'});
+    grad.appendChild(el('stop',{offset:'0%','stop-color':'#00e5a0','stop-opacity':'.28'}));
+    grad.appendChild(el('stop',{offset:'100%','stop-color':'#00e5a0','stop-opacity':'0'}));
+    const defs = el('defs',{}); defs.appendChild(grad); frag.appendChild(defs);
+    frag.appendChild(el('path',{d:area,fill:'url(#nsFill)'}));
+
+    // trend line
+    const line = SERIES.map((d,i)=>`${i?'L':'M'} ${x(i)} ${y(d.pct)}`).join(' ');
+    frag.appendChild(el('path',{d:line,fill:'none',stroke:'#00e5a0','stroke-width':2.6,'stroke-linejoin':'round','stroke-linecap':'round'}));
+
+    // points + crossing marker
+    let crossed=false;
+    SERIES.forEach((d,i)=>{
+      const isCross = !crossed && d.pct>GOAL;
+      if(isCross) crossed=true;
+      frag.appendChild(el('circle',{cx:x(i),cy:y(d.pct),r:isCross?5.5:3.2,
+        fill:isCross?'#070b14':'#00e5a0',stroke:'#00e5a0','stroke-width':isCross?2.6:0}));
+      if(isCross){
+        const c1=el('text',{x:x(i),y:y(d.pct)-18,'text-anchor':'middle',fill:'#00e5a0','font-family':'IBM Plex Mono, monospace','font-size':12,'font-weight':700});
+        c1.textContent='crossed 60%';
+        frag.appendChild(c1);
+      }
+    });
+
+    // x labels (month boundaries only, to stay readable)
+    SERIES.forEach((d,i)=>{
+      if(i%4!==0) return;
+      const t=el('text',{x:x(i),y:H-PB+22,'text-anchor':'middle',fill:'#c3d2e6','font-family':'IBM Plex Mono, monospace','font-size':12,'font-weight':600});
+      t.textContent=d.w.split(' ')[0]; frag.appendChild(t);
+    });
+
+    // axes
+    frag.appendChild(el('line',{x1:PL,x2:W-PR,y1:PT+ih,y2:PT+ih,stroke:'#27456e','stroke-width':1.4}));
+
+    svg.appendChild(frag);
+  })();
 
   // scroll reveal
   const io=new IntersectionObserver((es)=>{
