@@ -1151,13 +1151,10 @@ flowchart LR
       <table>
         <thead><tr><th>Reported as</th><th>Actually was</th><th>Real owner</th></tr></thead>
         <tbody>
-          <tr><td>"Sally went silent halfway through the call"</td><td class="v">Fifteen seconds of <em>legitimate</em> silence — the caller was reading a chart — made AWS end the stream, and the plugin surfaced the timeout as a hard failure</td><td><span class="lyr stt">STT</span></td></tr>
-          <tr><td>"Sally is struggling with last names"</td><td class="v">Not transcription. Verification compared raw strings, so a double surname spoken with a space never matched the stored record</td><td><span class="lyr code">code</span></td></tr>
           <tr><td>"She wrote Calcutta with a C — the address won't match"</td><td class="v">A hard <strong>C</strong> and a <strong>K</strong> are near-indistinguishable over a phone codec. The transcript looked clean, the agent proceeded confidently, and the lookup failed on a different string entirely</td><td><span class="lyr stt">STT</span> <span class="lyr prompt">prompt</span></td></tr>
           <tr><td>"There's an extra zero in the ID she read back"</td><td class="v">Nothing was added. Three identical digit words in a row blur into each other on the phone, so <code>1000</code> was <em>heard</em> as a fourth zero</td><td><span class="lyr tts">TTS</span></td></tr>
           <tr><td>"Only one diagnosis code reached the record"</td><td class="v">ICD qualifier mapping in the 278 builder — the first code takes one qualifier, every code after it takes another</td><td><span class="lyr code">code</span></td></tr>
           <tr><td>"Sally is calling a hyphen a numeric 2"</td><td class="v">The warm-transfer debrief spelled the ticket number out character by character and left a bare <code>-</code> in the stream; the voice rendered it "two"</td><td><span class="lyr tts">TTS</span></td></tr>
-          <tr><td>"The AI struggles with the male/female question"</td><td class="v"><strong>There is no gender question.</strong> It was removed months earlier — gender comes from the eligibility file. The ticket described a question the agent no longer asks</td><td><span class="lyr data">nobody</span></td></tr>
         </tbody>
       </table>
     </div>
