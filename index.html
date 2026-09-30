@@ -1,0 +1,2399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BenePower GenAI — Conversational Benefits Platform &amp; Voice-Agent Production Issues</title>
+<meta name="description" content="Architecture and production work on BenePower: multi-agent RAG, voice intake agent, HIPAA backend, eval harness, and the production issues behind a phone-based AI agent.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Archivo:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous"></script>
+<style>
+  :root{
+    --bg:#070b14;
+    --bg2:#0a0e1a;
+    --panel:#0d1526;
+    --panel2:#0f1a30;
+    --line:#1c3252;
+    --line2:#27456e;
+    --navy:#0f2340;
+    --navy-b:#1e4d8c;
+    --purple:#1a1040;
+    --purple-b:#4c3a9e;
+    --accent:#00e5a0;
+    --accent-dim:#0a7a5a;
+    --coral:#ff7a8a;
+    --coral-dim:#5c2230;
+    --red:#ef4444;
+    --red-bg:#2a0a10;
+    --amber:#f5a623;
+    --txt:#f2f7ff;
+    --muted:#c3d2e6;
+    --muted2:#aebfd8;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --display:'Archivo','IBM Plex Sans',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--txt);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(900px 500px at 80% -5%, rgba(0,229,160,.10), transparent 60%),
+      radial-gradient(800px 600px at 5% 10%, rgba(76,58,158,.12), transparent 55%),
+      radial-gradient(700px 500px at 95% 80%, rgba(255,122,138,.06), transparent 60%),
+      var(--bg);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;z-index:-1;opacity:.4;
+    background-image:
+      linear-gradient(rgba(40,69,110,.12) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(40,69,110,.12) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(circle at 50% 0%,#000,transparent 80%);
+    mask-image:radial-gradient(circle at 50% 0%,#000,transparent 80%);
+  }
+
+  /* NAV */
+  nav{
+    position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:28px;
+    padding:14px clamp(18px,4vw,56px);background:rgba(7,11,20,.78);
+    backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+  }
+  .brand{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:2.5px;color:var(--txt);white-space:nowrap}
+  .brand b{color:var(--accent)}
+  .navlinks{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap;align-items:center}
+  .navlinks a{
+    font-family:var(--mono);font-size:12px;letter-spacing:.5px;color:var(--muted);
+    text-decoration:none;position:relative;padding:4px 0;transition:color .2s;
+  }
+  .navlinks a:hover{color:var(--accent)}
+  .navlinks a::after{content:"";position:absolute;left:0;bottom:-2px;height:1.5px;width:0;background:var(--accent);transition:width .25s}
+  .navlinks a:hover::after{width:100%}
+  .navlinks a.back{color:var(--accent);border:1px solid var(--accent-dim);border-radius:30px;padding:5px 13px;background:rgba(0,229,160,.06)}
+  .navlinks a.back::after{display:none}
+  .navlinks a.back:hover{background:rgba(0,229,160,.14)}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(18px,4vw,40px)}
+
+  /* HERO */
+  header{padding:clamp(52px,8vw,104px) 0 clamp(36px,5vw,68px)}
+  .role{
+    font-family:var(--mono);font-size:12px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--accent);margin-bottom:22px;display:inline-block;
+    border:1px solid var(--accent-dim);border-radius:40px;padding:6px 16px;background:rgba(0,229,160,.06);
+  }
+  h1.hero{font-family:var(--display);font-weight:900;font-size:clamp(32px,6.2vw,70px);line-height:.99;letter-spacing:-1.5px;margin-bottom:26px}
+  h1.hero .g{background:linear-gradient(100deg,var(--accent),#7df5cf 50%,#4c8cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{font-size:clamp(15px,1.9vw,19px);color:var(--muted);max-width:820px;margin-bottom:14px}
+  .lede strong{color:var(--txt);font-weight:600}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:44px}
+  .stat{
+    border:1px solid var(--line);border-radius:14px;padding:22px 20px;
+    background:linear-gradient(180deg,var(--panel),rgba(13,21,38,.4));position:relative;overflow:hidden;
+  }
+  .stat::before{content:"";position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--accent),transparent)}
+  .stat .n{font-family:var(--mono);font-weight:700;font-size:clamp(22px,3vw,32px);color:var(--accent);letter-spacing:-1px}
+  .stat .n.sm{font-size:clamp(15px,1.8vw,19px);letter-spacing:0;line-height:1.25;word-break:break-word}
+  .stat .l{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.4}
+
+  /* SECTIONS */
+  section{padding:clamp(44px,6.5vw,86px) 0;border-top:1px solid var(--line)}
+  .seclabel{
+    font-family:var(--mono);font-size:11px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:10px;
+  }
+  .seclabel::before{content:"";width:26px;height:1px;background:var(--accent)}
+  h2{font-family:var(--display);font-weight:800;font-size:clamp(26px,4vw,44px);letter-spacing:-.8px;line-height:1.05;margin-bottom:18px}
+  .sub{color:var(--muted);max-width:860px;font-size:clamp(14.5px,1.6vw,17px);margin-bottom:34px}
+  .sub strong{color:var(--txt)}
+  code{font-family:var(--mono);font-size:.88em;color:#9fe9d0;background:rgba(0,229,160,.07);border:1px solid rgba(10,122,90,.4);border-radius:5px;padding:1px 6px}
+
+  /* DIAGRAM */
+  .diagram{border:1px solid var(--line);border-radius:16px;background:var(--bg2);overflow:hidden;margin:18px 0}
+  .diagram .dhead{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 18px;
+    border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11.5px;letter-spacing:1px;
+    color:var(--muted);background:linear-gradient(180deg,rgba(15,26,48,.6),transparent);
+  }
+  .diagram .dhead .tag{color:var(--accent)}
+  .diagram .dhead .tag.warn{color:var(--amber)}
+  .diagram .dhead .tag.bad{color:var(--coral)}
+  .diagram .body{padding:24px 14px;overflow-x:auto}
+  .mermaid{display:flex;justify-content:center;min-width:480px}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:880px){.twocol{grid-template-columns:1fr}}
+
+  /* CODE BLOCK */
+  .cb{
+    border:1px solid var(--line);border-radius:12px;background:var(--bg2);
+    overflow:hidden;margin:14px 0;
+  }
+  .cb .cbh{
+    padding:8px 14px;border-bottom:1px solid var(--line);font-family:var(--mono);
+    font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted2);
+    background:rgba(15,26,48,.45);
+  }
+  .cb pre{padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;color:#b9d4e8}
+  .cb pre .c{color:var(--muted2)}
+  .cb pre .g{color:var(--accent)}
+  .cb pre .r{color:var(--coral)}
+  .cb pre .a{color:var(--amber)}
+
+  /* CARDS */
+  .cards{display:grid;gap:16px;margin-top:8px}
+  .c2{grid-template-columns:1fr 1fr}
+  .c3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:880px){.c2,.c3{grid-template-columns:1fr}}
+  .card{
+    border:1px solid var(--line);border-radius:14px;padding:22px;
+    background:linear-gradient(180deg,var(--panel),rgba(13,21,38,.35));
+    transition:transform .2s,border-color .2s;
+  }
+  .card:hover{transform:translateY(-3px);border-color:var(--line2)}
+  .card .k{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:10px}
+  .card h3{font-family:var(--sans);font-weight:600;font-size:18px;margin-bottom:8px;color:var(--txt)}
+  .card.accent h3{color:var(--accent)}
+  .card.coral{border-color:var(--coral-dim)}
+  .card.coral h3{color:var(--coral)}
+  .card.warn{border-color:rgba(245,166,35,.4)}
+  .card.warn h3{color:var(--amber)}
+  .card p{font-size:14.5px;color:var(--muted)}
+  .card p strong{color:var(--txt)}
+  .card p+p{margin-top:11px}
+
+  /* LAYER BADGE */
+  .lyr{font-family:var(--mono);font-size:10px;letter-spacing:1.3px;text-transform:uppercase;padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .lyr.stt{color:#8fb4ff;background:rgba(76,140,255,.10);border:1px solid rgba(76,140,255,.4)}
+  .lyr.tts{color:var(--accent);background:rgba(0,229,160,.09);border:1px solid var(--accent-dim)}
+  .lyr.code{color:var(--amber);background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.4)}
+  .lyr.prompt{color:var(--coral);background:rgba(255,122,138,.10);border:1px solid var(--coral-dim)}
+  .lyr.api{color:#c9a6ff;background:rgba(140,110,255,.12);border:1px solid rgba(140,110,255,.4)}
+  .lyr.data{color:var(--muted);background:rgba(130,149,178,.08);border:1px solid var(--line2)}
+
+  /* METRICS-FIRST STRIP */
+  .mstrip{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:8px;
+    margin:2px 0 16px;
+  }
+  .mstrip .m{
+    background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 13px;
+  }
+  .mstrip .mv{display:block;font-family:var(--mono);font-weight:700;font-size:19px;color:var(--accent);letter-spacing:-.5px;line-height:1.15;overflow-wrap:anywhere}
+  .mstrip .mv.bad{color:var(--coral)}
+  .mstrip .mv.amb{color:var(--amber)}
+  .mstrip .mv.sm{font-size:13.5px;letter-spacing:0;line-height:1.3}
+  .mstrip .ml{display:block;font-size:11px;color:var(--muted2);margin-top:5px;line-height:1.35}
+
+  /* APPROACH BLOCK */
+  .appr{margin:14px 0 13px}
+  .appr b{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:9px;font-weight:600}
+  .appr ul{list-style:none;display:grid;gap:7px}
+  .appr li{position:relative;padding-left:20px;font-size:13.5px;color:var(--muted);line-height:1.5}
+  .appr li::before{content:"→";position:absolute;left:0;top:0;color:var(--accent);font-size:12px}
+  .appr li strong{color:var(--txt);font-weight:600}
+  .card.coral .appr b,.card.coral .appr li::before{color:var(--coral)}
+  .card.warn .appr b,.card.warn .appr li::before{color:var(--amber)}
+
+  /* TIE LINE */
+  .tie{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--muted2);line-height:1.55}
+  .tie b{font-family:var(--mono);font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:5px;font-weight:600}
+  .tie.bad b{color:var(--coral)}
+  .tie strong{color:var(--muted);font-weight:600}
+
+  /* TABLE */
+  .tbl{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:6px 0;overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:620px}
+  th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);background:rgba(15,26,48,.5)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(15,26,48,.4)}
+  td:first-child{font-family:var(--mono);color:var(--txt);font-weight:500}
+  td.v{color:var(--muted)}
+  td .num{font-family:var(--mono);color:var(--txt)}
+  td .ok{color:var(--accent);font-family:var(--mono);font-size:12.5px}
+  td .no{color:var(--coral);font-family:var(--mono);font-size:12.5px}
+
+  /* LISTS */
+  .lst{list-style:none;display:grid;gap:11px;margin-top:6px}
+  .lst li{position:relative;padding-left:26px;color:var(--muted);font-size:14.5px}
+  .lst li::before{content:"▹";position:absolute;left:2px;color:var(--accent);font-size:13px;top:1px}
+  .lst li strong{color:var(--txt);font-weight:600}
+  .lst.bad li::before{content:"✕";color:var(--red)}
+  .lst.num{counter-reset:s}
+  .lst.num li{counter-increment:s;padding-left:30px}
+  .lst.num li::before{content:counter(s);font-family:var(--mono);font-size:11px;color:var(--accent);top:2px;font-weight:700}
+
+  .chiprow{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{font-family:var(--mono);font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--panel)}
+  .chip b{color:var(--accent);font-weight:600}
+  .chip.dim b{color:#8fb4ff}
+  .chip.amb b{color:var(--amber)}
+
+  /* WHY CHAIN */
+  .whys{display:grid;gap:0;margin:16px 0;counter-reset:w}
+  .why{
+    position:relative;padding:14px 18px 14px 62px;border:1px solid var(--line);
+    border-bottom:none;background:var(--bg2);font-size:14px;color:var(--muted);
+  }
+  .why:first-child{border-radius:12px 12px 0 0}
+  .why:last-child{border-bottom:1px solid var(--line);border-radius:0 0 12px 12px}
+  .why::before{
+    counter-increment:w;content:"WHY " counter(w);
+    position:absolute;left:14px;top:15px;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:1px;color:var(--accent);font-weight:700;
+  }
+  .why strong{color:var(--txt)}
+  .why.hit{background:rgba(255,122,138,.06);border-left:3px solid var(--coral);padding-left:59px}
+  .why.hit::before{color:var(--coral)}
+
+  /* CALLOUT */
+  .callout{
+    border:1px solid var(--line2);border-left:3px solid var(--accent);border-radius:0 14px 14px 0;
+    background:linear-gradient(90deg,rgba(0,229,160,.05),transparent 60%);padding:20px 24px;margin:22px 0;
+  }
+  .callout.bad{border-left-color:var(--coral);background:linear-gradient(90deg,rgba(255,122,138,.06),transparent 60%)}
+  .callout p{color:var(--muted);font-size:15px}
+  .callout p strong{color:var(--txt)}
+  .callout .q{font-size:clamp(15px,2vw,18px);color:var(--txt);font-style:italic;line-height:1.55}
+
+  /* FOOTER */
+  footer{padding:46px 0 70px;border-top:1px solid var(--line);text-align:center}
+  footer a{color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:13px}
+  footer .fl{font-family:var(--mono);font-size:12px;color:var(--muted2);letter-spacing:1px;margin-top:18px}
+  .backlink{
+    display:inline-block;margin:0 6px 22px;text-decoration:none;font-family:var(--mono);font-size:13px;
+    color:var(--accent);border:1px solid var(--accent-dim);border-radius:30px;padding:9px 20px;
+    background:rgba(0,229,160,.06);transition:background .2s,transform .2s;
+  }
+  .backlink:hover{background:rgba(0,229,160,.14);transform:translateY(-2px)}
+
+  .rev{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+  .rev.in{opacity:1;transform:none}
+
+  :root{
+    --bg:#070b14;
+    --bg2:#0a0e1a;
+    --panel:#0d1526;
+    --panel2:#0f1a30;
+    --line:#1c3252;
+    --line2:#27456e;
+    --navy:#0f2340;
+    --navy-b:#1e4d8c;
+    --purple:#1a1040;
+    --purple-b:#4c3a9e;
+    --accent:#00e5a0;
+    --accent-dim:#0a7a5a;
+    --coral:#ff7a8a;
+    --coral-dim:#5c2230;
+    --red:#ef4444;
+    --red-bg:#2a0a10;
+    --amber:#f5a623;
+    --txt:#f2f7ff;
+    --muted:#c3d2e6;
+    --muted2:#aebfd8;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --display:'Archivo','IBM Plex Sans',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--txt);
+    font-family:var(--sans);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(900px 500px at 80% -5%, rgba(0,229,160,.10), transparent 60%),
+      radial-gradient(800px 600px at 5% 10%, rgba(76,58,158,.12), transparent 55%),
+      radial-gradient(700px 500px at 95% 80%, rgba(255,122,138,.06), transparent 60%),
+      var(--bg);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;z-index:-1;opacity:.4;
+    background-image:
+      linear-gradient(rgba(40,69,110,.12) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(40,69,110,.12) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(circle at 50% 0%,#000,transparent 80%);
+    mask-image:radial-gradient(circle at 50% 0%,#000,transparent 80%);
+  }
+
+  /* NAV */
+  nav{
+    position:sticky;top:0;z-index:100;
+    display:flex;align-items:center;gap:28px;
+    padding:14px clamp(18px,4vw,56px);
+    background:rgba(7,11,20,.78);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:2.5px;
+    color:var(--txt);white-space:nowrap;
+  }
+  .brand b{color:var(--accent)}
+  .navlinks{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
+  .navlinks a{
+    font-family:var(--mono);font-size:12px;letter-spacing:.5px;
+    color:var(--muted);text-decoration:none;position:relative;padding:4px 0;
+    transition:color .2s;
+  }
+  .navlinks a:hover{color:var(--accent)}
+  .navlinks a::after{
+    content:"";position:absolute;left:0;bottom:-2px;height:1.5px;width:0;
+    background:var(--accent);transition:width .25s;
+  }
+  .navlinks a:hover::after{width:100%}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(18px,4vw,40px)}
+
+  /* HERO */
+  header{padding:clamp(60px,9vw,120px) 0 clamp(40px,6vw,80px)}
+  .role{
+    font-family:var(--mono);font-size:12px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--accent);margin-bottom:22px;display:inline-block;
+    border:1px solid var(--accent-dim);border-radius:40px;padding:6px 16px;
+    background:rgba(0,229,160,.06);
+  }
+  h1.hero{
+    font-family:var(--display);font-weight:900;
+    font-size:clamp(36px,7vw,80px);line-height:.98;letter-spacing:-1.5px;
+    margin-bottom:26px;
+  }
+  h1.hero .g{
+    background:linear-gradient(100deg,var(--accent),#7df5cf 50%,#4c8cff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .lede{font-size:clamp(15px,1.9vw,19px);color:var(--muted);max-width:780px;margin-bottom:14px}
+  .lede strong{color:var(--txt);font-weight:600}
+  .stats{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:14px;margin-top:46px;
+  }
+  .stat{
+    border:1px solid var(--line);border-radius:14px;padding:22px 20px;
+    background:linear-gradient(180deg,var(--panel),rgba(13,21,38,.4));
+    position:relative;overflow:hidden;
+  }
+  .stat::before{
+    content:"";position:absolute;top:0;left:0;width:100%;height:2px;
+    background:linear-gradient(90deg,var(--accent),transparent);
+  }
+  .stat .n{font-family:var(--mono);font-weight:700;font-size:clamp(22px,3vw,32px);color:var(--accent);letter-spacing:-1px}
+  .stat .n.sm{font-size:clamp(15px,1.8vw,19px);letter-spacing:0;line-height:1.25;word-break:break-word}
+  .stat .l{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.4}
+
+  /* SECTIONS */
+  section{padding:clamp(48px,7vw,90px) 0;border-top:1px solid var(--line)}
+  .seclabel{
+    font-family:var(--mono);font-size:11px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:10px;
+  }
+  .seclabel::before{content:"";width:26px;height:1px;background:var(--accent)}
+  h2{font-family:var(--display);font-weight:800;font-size:clamp(26px,4vw,44px);letter-spacing:-.8px;line-height:1.05;margin-bottom:18px}
+  .sub{color:var(--muted);max-width:840px;font-size:clamp(14.5px,1.6vw,17px);margin-bottom:38px}
+  .sub strong{color:var(--txt)}
+  code{font-family:var(--mono);font-size:.88em;color:#9fe9d0;background:rgba(0,229,160,.07);border:1px solid rgba(10,122,90,.4);border-radius:5px;padding:1px 6px}
+
+  /* DIAGRAM PANELS */
+  .diagram{
+    border:1px solid var(--line);border-radius:16px;background:var(--bg2);
+    overflow:hidden;margin:18px 0;
+  }
+  .diagram .dhead{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:11px 18px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:11.5px;letter-spacing:1px;color:var(--muted);
+    background:linear-gradient(180deg,rgba(15,26,48,.6),transparent);
+  }
+  .diagram .dhead .tag{color:var(--accent)}
+  .diagram .body{padding:24px 14px;overflow-x:auto}
+  .mermaid{display:flex;justify-content:center;min-width:480px}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:880px){.twocol{grid-template-columns:1fr}}
+
+  /* CARDS */
+  .cards{display:grid;gap:16px;margin-top:8px}
+  .c2{grid-template-columns:1fr 1fr}
+  .c3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:880px){.c2,.c3{grid-template-columns:1fr}}
+  .card{
+    border:1px solid var(--line);border-radius:14px;padding:22px;
+    background:linear-gradient(180deg,var(--panel),rgba(13,21,38,.35));
+    transition:transform .2s,border-color .2s;
+  }
+  .card:hover{transform:translateY(-3px);border-color:var(--line2)}
+  .card .k{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:10px}
+  .status{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;border-radius:20px;margin-left:8px;vertical-align:middle;font-weight:600}
+  .status.shipped{color:var(--accent);background:rgba(0,229,160,.10);border:1px solid var(--accent-dim)}
+  .status.wip{color:var(--amber);background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.4)}
+  .status.future{color:#8fb4ff;background:rgba(76,140,255,.10);border:1px solid rgba(76,140,255,.4)}
+  .card h3{font-family:var(--sans);font-weight:600;font-size:18px;margin-bottom:8px;color:var(--txt)}
+  .card.accent h3{color:var(--accent)}
+  .card.coral{border-color:var(--coral-dim)}
+  .card.coral h3{color:var(--coral)}
+  .card.warn{border-color:#5c2230}
+  .card.warn h3{color:#ff8a9a}
+  .card p{font-size:14.5px;color:var(--muted)}
+  .card p strong{color:var(--txt)}
+  .card .pill{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--accent);background:rgba(0,229,160,.08);border:1px solid var(--accent-dim);border-radius:30px;padding:3px 11px;margin:4px 6px 0 0}
+
+  /* TABLE */
+  .tbl{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:6px 0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);background:rgba(15,26,48,.5)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(15,26,48,.4)}
+  td:first-child{font-family:var(--mono);color:var(--txt);font-weight:500}
+  td.v{color:var(--muted)}
+  td .ok{color:var(--accent);font-family:var(--mono);font-size:12.5px}
+  td .num{font-family:var(--mono);color:var(--txt)}
+
+  /* LISTS */
+  .lst{list-style:none;display:grid;gap:11px;margin-top:6px}
+  .lst li{position:relative;padding-left:26px;color:var(--muted);font-size:14.5px}
+  .lst li::before{content:"▹";position:absolute;left:2px;color:var(--accent);font-size:13px;top:1px}
+  .lst li strong{color:var(--txt);font-weight:600}
+  .lst.bad li::before{content:"✕";color:var(--red)}
+
+  .chiprow{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .chip{font-family:var(--mono);font-size:11.5px;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--panel)}
+  .chip b{color:var(--accent);font-weight:600}
+
+  /* IMPACT GRID */
+  .impact{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:34px}
+  .imp{border:1px solid var(--line);border-radius:14px;padding:24px;background:var(--panel)}
+  .imp .big{font-family:var(--mono);font-weight:700;font-size:28px;color:var(--accent);letter-spacing:-1px}
+  .imp .d{font-size:13.5px;color:var(--muted);margin-top:8px}
+
+  /* REFERENCES / FOOTER */
+  .refs{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.refs{grid-template-columns:1fr}}
+  .ref{
+    display:block;text-decoration:none;border:1px solid var(--line);border-radius:14px;
+    padding:20px;background:var(--panel);transition:border-color .2s,transform .2s;
+  }
+  .ref:hover{border-color:var(--accent-dim);transform:translateY(-3px)}
+  .ref .t{font-family:var(--mono);font-size:14px;color:var(--accent);margin-bottom:6px}
+  .ref .u{font-size:12px;color:var(--muted2);font-family:var(--mono);word-break:break-all;margin-bottom:8px}
+  .ref .d{font-size:13.5px;color:var(--muted)}
+  footer{padding:46px 0 70px;border-top:1px solid var(--line);text-align:center}
+  footer a{color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:13px}
+  footer .fl{font-family:var(--mono);font-size:12px;color:var(--muted2);letter-spacing:1px;margin-top:18px}
+
+  /* reveal */
+  .rev{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+  .rev.in{opacity:1;transform:none}
+
+  /* merged-page additions */
+  .tbl{overflow-x:auto}
+  .deep table{min-width:620px}
+  .deep .card.warn{border-color:rgba(245,166,35,.4)}
+  .deep .card.warn h3{color:var(--amber)}
+  header.part{border-top:1px solid var(--line);scroll-margin-top:60px}
+  header.part h1.hero{font-size:clamp(32px,6.2vw,70px);line-height:.99}
+  .partnav{display:flex;flex-wrap:wrap;gap:8px;margin-top:30px}
+  .partnav a{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;border:1px solid var(--line2);border-radius:30px;padding:6px 14px;background:var(--panel);transition:color .2s,border-color .2s}
+  .partnav a:hover{color:var(--accent);border-color:var(--accent-dim)}
+  section{scroll-margin-top:60px}
+  .cards>*,.refs>*,.stats>*{min-width:0}
+  .card code,.appr code,.tie code,.callout code{overflow-wrap:anywhere}
+  @media(max-width:760px){
+    nav{flex-wrap:wrap;gap:8px;padding:10px 16px}
+    .navlinks{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;gap:14px;scrollbar-width:none}
+    .navlinks a{white-space:nowrap;flex:none}
+    .diagram,.tbl,.cb{max-width:100%}
+  }
+</style>
+</head>
+<body id="top">
+
+<nav>
+  <span class="brand">BENEPOWER <b>//</b> GENAI</span>
+  <div class="navlinks">
+    <a href="#architecture">Platform</a>
+    <a href="#eval">RAG Eval</a>
+    <a href="#voice">Voice Agent</a>
+    <a href="#ticketing">Ticketing</a>
+    <a href="#migration">Celery → Airflow</a>
+    <a href="#pipeline">HIPAA / X12</a>
+    <a href="#integrity">Data Integrity</a>
+    <a href="#metrics">Impact</a>
+    <a href="#ownership">Ownership</a>
+    <a href="#issues" style="color:var(--accent);border:1px solid var(--accent-dim);border-radius:30px;padding:5px 13px;background:rgba(0,229,160,.06)">Issues →</a>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <span class="role">Part I · Architect · BenePower</span>
+    <h1 class="hero">CONVERSATIONAL<br><span class="g">BENEFITS, BY AGENT</span></h1>
+    <p class="lede">I architected an <strong>AI-powered agentic platform</strong> that lets members and providers ask natural-language questions about their <strong>benefits, eligibility, and coverage</strong> — scaling the architecture from <strong>0 to 1.2M+ onboarded users</strong>.</p>
+    <p class="lede">A <strong>multimodal, multi-agent RAG</strong> system over text, image, and voice — real-time conversational AI on <strong>LiveKit WebRTC + AWS Transcribe</strong>, with agents orchestrated in <strong>LangChain, LangGraph, and LangSmith</strong> over <strong>OpenAI and AWS Bedrock</strong> and backed by Redis short-term memory. It's fronted by a HIPAA-compliant <strong>Django</strong> backend — an agent-driven support-ticketing system, a Bedrock-native RAG evaluation harness, and a <strong>Celery → Airflow</strong> data platform on AWS (RDS · Lambda · SNS · S3 · CDK) with a <strong>Vue + Vite</strong> frontend — all of which I owned end to end.</p>
+    <div class="stats">
+      <div class="stat"><div class="n" style="font-size:clamp(19px,2.5vw,27px)">0 → 1.2M+</div><div class="l">Onboarded users on the platform I architected, from zero</div><div class="l" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><strong style="color:var(--accent);font-family:var(--mono);letter-spacing:1px">HIPAA</strong> — compliant multi-tenant benefits backend (834 / 837p)</div></div>
+      <div class="stat"><div class="n">≥90%</div><div class="l">Faithfulness gate on the RAG eval harness — with ≤2% hallucination</div><div class="l" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><strong style="color:var(--accent);font-family:var(--mono);letter-spacing:1px">3-LAYER · GATED</strong> — deterministic + RAGAS + phase checks block every unsafe deploy</div></div>
+      <div class="stat"><div class="n" style="font-size:clamp(19px,2.5vw,27px)">~3.2M / mo</div><div class="l">Voice-agent API calls at 10k calls a month — ~321 per call to LLM, TTS, STT &amp; backend</div></div>
+      <div class="stat"><div class="n sm">Celery → Airflow</div><div class="l">Census, claims &amp; ticketing unified on one MWAA framework</div></div>
+      <div class="stat"><div class="n sm">Django 4.2 → 5.2</div><div class="l">Backend hardening with test coverage grown 214 → 373+</div></div>
+    </div>
+  </div>
+</header>
+
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="wrap">
+    <div class="seclabel rev">System Design</div>
+    <h2 class="rev">Architecture — Multimodal Multi-Agent RAG</h2>
+    <p class="sub rev">Members and providers reach the same brain through three doors — <strong>chat, image upload, and a live phone call</strong>. The phone path bridges <strong>Twilio → LiveKit SIP</strong>; a multi-tenant <strong>Operator dispatcher</strong> resolves the inbound number to the right partner and spawns a specialist agent, which grounds answers in a <strong>Bedrock knowledge base</strong>, captures structured state, and writes everything back to a HIPAA-compliant backend.</p>
+
+    <div class="cards c2 rev" style="margin-bottom:30px">
+      <div class="card accent">
+        <div class="k">What it does</div>
+        <h3>Answers benefits questions, grounded</h3>
+        <p>Turns "what's my deductible?" or "is this CPT covered?" into a <strong>retrieval-grounded, cited answer</strong> — plan docs, accumulators, eligibility, and provider networks — instead of a human reading policy PDFs on every call.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">Who uses it</div>
+        <h3>Members &amp; providers, at scale</h3>
+        <p>HIPAA-verified members self-serve enrollment, claims, and ID-card questions; providers verify eligibility and precertification — across a <strong>multi-tenant</strong> backend serving hundreds of thousands of onboarded users.</p>
+      </div>
+    </div>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>platform architecture · channels → operator dispatch → agents → tools</span><span class="tag">green = core I architected</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart TD
+  classDef ext fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef edge fill:#1a1040,stroke:#4c3a9e,color:#ffffff
+  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef agent fill:#03200f,stroke:#00e5a0,color:#b5ffe8
+  classDef tool fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef store fill:#100e0a,stroke:#4a3a28,color:#ffffff
+
+  Chat["Member / Provider<br/>Web Chat (Vue + Vite)"]:::ext --> ORCH
+  Img["Image Upload<br/>(cards, EOBs)"]:::ext --> ORCH
+  Voice["Phone Call (PSTN)"]:::ext --> TW["Twilio SIP trunk"]:::edge
+  TW --> LK["LiveKit Cloud<br/>WebRTC + SIP · AWS Transcribe STT<br/>TTS by stage — Polly or ElevenLabs"]:::edge
+  LK --> ORCH["Operator Dispatch<br/>multi-tenant route by DNIS"]:::core
+
+  ORCH --> AFront["Concierge Agent<br/>greeting + member/provider intent"]:::agent
+  AFront --> AMember["Member Services Agent<br/>verify · benefits · accumulators"]:::agent
+  AFront --> AProvider["Provider Agent<br/>NPI/EIN verify · eligibility"]:::agent
+  ORCH --> AIntake["Intake Agent<br/>7-state precert capture"]:::agent
+
+  AMember --> RAG["RAG · Bedrock KB<br/>RetrieveAndGenerate + citations"]:::core
+  AProvider --> RAG
+  AMember --> Tools["Benepower API<br/>members · plans · tickets"]:::tool
+  AProvider --> Tools
+  AFront --> Tools
+
+  AFront --> CWT["Warm Transfer<br/>supervisor consult room"]:::agent
+  AIntake --> EDI[("S3 intake_data → EventBridge<br/>→ Airflow 278 EDI")]:::store
+
+  ORCH -.->|transcripts + audio after each turn| S3[("S3 conversation-logs")]:::store
+  Tools --> PG[("Backend / RDS<br/>members · claims · tickets")]:::store
+  RAG --> KBS3[("S3 · plan docs / KB sources")]:::store
+
+  style ORCH fill:#053a22,stroke:#00e5a0,stroke-width:2px,color:#eafff7
+</pre>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:46px">Why an operator + specialist agents, not one big prompt</div>
+    <div class="cards c3 rev">
+      <div class="card accent"><div class="k">Isolation</div><h3>Per-persona behavior</h3><p>Each agent carries its own prompt, tools, and guardrails: Member answers are plain-language (URAC level), Provider answers are technical and concise, and Intake is a single-purpose 7-state capture machine with no free-form Q&amp;A.</p></div>
+      <div class="card accent"><div class="k">Grounding</div><h3>Retrieval before generation</h3><p>The Member/Provider agents call Bedrock Knowledge Base <code>RetrieveAndGenerate</code> (one KB per plan/document set) and return <strong>in-line citations</strong> — S3 source, page, chunk — so no claim floats free of its source.</p></div>
+      <div class="card accent"><div class="k">Memory</div><h3>Bounded, hand-off-safe context</h3><p>Chat context is summarized before it blows past Bedrock token limits (<code>max_items 50 · keep_last_turns 5</code>) and filtered across agent hand-offs, so the next agent inherits what the caller already said without re-asking.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- RAG EVAL -->
+<section id="eval">
+  <div class="wrap">
+    <div class="seclabel rev">Trust &amp; Reliability</div>
+    <h2 class="rev">A RAG Evaluation Framework That Gates Deploys</h2>
+    <p class="sub rev">An agent that talks to patients about their coverage cannot ship on vibes. I built a fully <strong>AWS-native, HIPAA-safe evaluation pipeline</strong> on <strong>Bedrock + RAGAS</strong> that scores every transcript against a golden set, computes aggregate metrics, and <strong>blocks deployment</strong> when a quality gate fails. Once a change clears the gate, an <strong>A/B harness</strong> decides whether it is actually <em>better</em> — per-call variant assignment, paired offline runs first, live splits only for low-risk knobs (A/B testing).</p>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>event-driven eval pipeline · S3 → EventBridge → MWAA</span><span class="tag">offline benchmarking + quality gates</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart LR
+  classDef src fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef trig fill:#1a1040,stroke:#4c3a9e,color:#fff
+  classDef step fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef gate fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  classDef out fill:#100e0a,stroke:#4a3a28,color:#fff
+
+  T["Transcripts<br/>(agent calls / QA upload)"]:::src --> S3["S3 bucket"]:::src
+  S3 --> EB["EventBridge"]:::trig --> LMB["Lambda trigger"]:::trig --> DAG
+
+  subgraph DAG["MWAA · eval_sally DAG"]
+    direction TB
+    D["deterministic<br/>fields · branching · ASR · latency"]:::step
+    R["RAGAS via Bedrock Claude<br/>faithfulness · relevancy · context"]:::step
+    P["phase-level<br/>healthcare compliance"]:::step
+    A["aggregate"]:::step
+    D --> A
+    R --> A
+    P --> A
+  end
+
+  A --> G{"Quality<br/>Gates"}:::gate
+  G -->|PASS| OK["Safe to deploy"]:::step
+  G -->|FAIL| SNS["SNS alert + block"]:::out
+  A --> M[("metrics history<br/>+ HTML dashboard")]:::out
+</pre>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:42px">Three Layers of Evaluation</div>
+    <p class="sub rev" style="margin-bottom:20px">A call where every individual turn scores well can still be a compliance failure if the turns happen in the wrong order. Three complementary layers each catch a different class of failure.</p>
+    <div class="cards c3 rev">
+      <div class="card accent">
+        <div class="k">Layer 1 · Deterministic</div>
+        <h3>Fast, reproducible, no LLM</h3>
+        <p>Pure-Python rules: field-capture rate &amp; accuracy, branching accuracy, ASR robustness on hard inputs, turn-count efficiency, and latency — sub-second and 100% repeatable.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">Layer 2 · LLM-as-Judge</div>
+        <h3>RAGAS on Bedrock Claude</h3>
+        <p>Faithfulness, response relevancy, answer correctness, context precision/recall, topic adherence, <strong>tool-call accuracy</strong>, and semantic similarity — judged in-account so PHI never leaves AWS.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">Layer 3 · Phase-Level</div>
+        <h3>Healthcare compliance</h3>
+        <p>Structural checks turn-level metrics miss: identity before data, branch detection before branch questions, no premature disclosure, and call termination on HIPAA failure.</p>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:46px">Metrics That Matter</div>
+    <p class="sub rev" style="margin-bottom:18px">RAGAS provides the judge templates; I defined the targets and the offline benchmarking loop that moves them. These are <strong>release-gate</strong> metrics — measured offline against a golden set, per release candidate. The separate question of whether real production calls actually finished the job is a different system with no metrics in common;.</p>
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Metric</th><th>What it measures</th><th>Layer</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td>Faithfulness</td><td class="v">Response grounded in retrieved context — no hallucination</td><td class="v">LLM-judge</td><td><span class="num">&ge; 0.90</span></td></tr>
+          <tr><td>Hallucination rate</td><td class="v">Share of turns with invented information</td><td class="v">LLM-judge</td><td><span class="num">&le; 2%</span></td></tr>
+          <tr><td>Context recall</td><td class="v">All relevant docs were actually retrieved</td><td class="v">LLM-judge</td><td><span class="num">&ge; 0.80</span></td></tr>
+          <tr><td>Semantic similarity</td><td class="v">Embedding distance to the golden answer (Titan)</td><td class="v">Embedding</td><td><span class="num">&ge; 0.80</span></td></tr>
+          <tr><td>Tool-call accuracy</td><td class="v">Correct API / tool selection by the agent</td><td class="v">LLM-judge</td><td><span class="num">&ge; 0.90</span></td></tr>
+          <tr><td>Branching accuracy</td><td class="v">Right branch questions for the CPT / ICD code</td><td class="v">Deterministic</td><td><span class="num">&ge; 0.95</span></td></tr>
+          <tr><td>HIPAA verification</td><td class="v">Identity verified before any disclosure</td><td class="v">Phase</td><td><span class="num">&ge; 0.95</span></td></tr>
+          <tr><td>Critical phase violations</td><td class="v">Data-before-ID, disclosure-before-intake, etc.</td><td class="v">Phase</td><td><span class="num">= 0</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:40px">Quality Gates · A Single FAIL Blocks Release</div>
+    <div class="diagram rev">
+      <div class="dhead"><span>aggregate_and_gate · go / no-go</span><span class="tag">6 blocking gates (v1) → 10 (v3)</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart LR
+  classDef g fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef pass fill:#03200f,stroke:#00e5a0,color:#b5ffe8
+  classDef fail fill:#2a0a10,stroke:#ef4444,color:#ffbdbd
+  G1["Field capture &ge; 0.90"]:::g --> R{"All pass?"}
+  G2["Branching &ge; 0.95"]:::g --> R
+  G3["HIPAA verify &ge; 0.95"]:::g --> R
+  G4["Faithfulness &ge; 0.90"]:::g --> R
+  G5["Hallucination &le; 0.02"]:::g --> R
+  G6["Critical violations = 0"]:::g --> R
+  R -->|yes| PASS["PASS · deploy"]:::pass
+  R -->|no| FAIL["FAIL · SNS alert"]:::fail
+</pre>
+      </div>
+    </div>
+
+    <div class="cards c3 rev" style="margin-top:26px">
+      <div class="card coral"><div class="k">v1 · Form Intake <span class="status shipped">shipped</span></div><h3>Foundation</h3><p>Deterministic + core RAGAS + phase compliance, 6 blocking gates, S3 static HTML dashboard.</p></div>
+      <div class="card coral"><div class="k">v2 · RAG Voice Agent <span class="status wip">in progress</span></div><h3>Production flywheel</h3><p>Building out the full RAGAS suite (MRR / NDCG / context) and agent metrics with self-hosted <strong>Langfuse</strong>: trace → annotate → golden set → re-eval.</p></div>
+      <div class="card coral"><div class="k">v3 · Multimodal <span class="status future">future</span></div><h3>Continuous</h3><p>Planned: raw-audio WER, TTS MOS, tone/empathy scoring, real-time eval on production calls, and A/B testing with statistical rigor. The <strong>Langfuse</strong> annotation flywheel may land here rather than in v2.</p></div>
+    </div>
+
+    <p class="sub rev" style="margin-top:22px;font-size:14px;color:var(--muted2)"><strong style="color:var(--amber)">Version note:</strong> these v1/v2/v3 numbers belong to the <strong>RAG eval harness</strong> — the offline, golden-set gate. Customer Pulse has its own separate v2 (a tiered LLM-as-judge on production calls); the two share the Bedrock substrate but no metric appears in both.</p>
+
+    <p class="sub rev" style="margin-top:18px">Why RAGAS + Bedrock over DeepEval, TruLens, or Phoenix: RAGAS brings battle-tested judge templates and <strong>agent/tool metrics</strong> with a swappable LLM backend, while Bedrock keeps the whole thing <strong>HIPAA-eligible</strong> — PHI never leaves the account.</p>
+  </div>
+</section>
+
+<!-- VOICE AGENT -->
+<section id="voice">
+  <div class="wrap">
+    <div class="seclabel rev">Real-Time Voice</div>
+    <h2 class="rev">A Voice Agent That Holds a Real Conversation</h2>
+    <p class="sub rev">The hardest channel is the phone. Inbound PSTN calls bridge <strong>Twilio → LiveKit SIP</strong>, where the agent <strong>(Sally)</strong> runs on <strong>AWS Transcribe</strong> for STT. <strong>TTS is stage-dependent</strong> — beta runs ElevenLabs, preprod and prod run <strong>AWS Polly generative</strong>, a divergence that hid a P0 speech defect from every environment developers actually test in (<a href="#tco">deep dive</a>). I designed the real-time layer so Sally <strong>verifies identity before disclosing anything</strong>, reads back member IDs one character at a time using a phonetic alphabet, survives barge-in and acknowledgements, and never falls into dead silence when a provider fails.</p>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>benefits / precertification call · happy path</span><span class="tag">Twilio→LiveKit SIP · HIPAA-verified → grounded answer</span></div>
+      <div class="body">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant C as Caller (Member / Provider)
+  participant T as Twilio SIP
+  participant LK as LiveKit + AWS Transcribe
+  participant OP as Operator Dispatch
+  participant S as Sally (Concierge → Member)
+  participant KB as Bedrock KB
+  participant API as Benepower API
+
+  C->>T: dials toll-free
+  T->>LK: SIP INVITE (DNIS + ANI)
+  LK->>OP: match dispatch rule
+  OP->>S: resolve partner, spawn specialist agent
+  S->>C: Greeting + "I can transfer you to a human anytime"
+  S->>C: Request identity → HIPAA verification
+  C->>S: Member ID + DOB (consecutive digits)
+  S->>C: Read back via Apple-Boy-Charlie alphabet, confirm
+  S->>API: verify_and_hydrate_member (parallel phone + DOB search)
+  alt HIPAA verified (≤ 3 tries)
+    API-->>S: member_uuid
+    S->>API: PATCH ticket hipaa_verified = true
+    C->>S: "What's my deductible?"
+    S->>KB: RetrieveAndGenerate (plan docs / accumulators)
+    KB-->>S: chunks + citations
+    S->>C: Plain-language, cited answer (interruptible)
+  else HIPAA fails 3×
+    S->>C: Cannot disclose PHI → scripted refusal
+    S->>API: log + terminate per compliance
+  end
+  opt Escalation (claims / ID card / provider search)
+    S->>C: Explicit confirm → warm transfer (consult room)
+    S->>API: attach handoff recording + transcript to ticket
+  end
+</pre>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:40px">Production-Hardening I Drove</div>
+    <div class="cards c3 rev">
+      <div class="card accent"><div class="k">Config resolution</div><h3>TTS is per-agent <em>and</em> per-stage</h3><p>The concierge runs ElevenLabs <code>eleven_turbo_v2_5</code>; the <strong>intake agent runs AWS Polly generative ("Ruth", 16 kHz)</strong> in prod and preprod, and ElevenLabs only in beta. One <code>provider</code> key, deep-merged per stage — and that divergence is exactly what hid a P0 from every environment developers test in (<a href="#tco">deep dive</a>).</p></div>
+      <div class="card accent"><div class="k">Naturalness</div><h3>VAD &amp; turn detection</h3><p>Silero VAD plus LiveKit's <code>MultilingualModel</code> turn detector stop the agent being cut off by "hmm" / "I see," keep RAG answers interruptible, and prevent double-speak via a shared response mixin.</p></div>
+      <div class="card accent"><div class="k">Stability</div><h3>STT session isolation</h3><p><code>ResilientAWSSTT</code> wraps AWS Transcribe with a <strong>unique session-id per agent</strong> (and a fresh one for the supervisor during transfer) — killing the silent STT failures that AWS session-id collisions used to cause.</p></div>
+      <div class="card accent"><div class="k">Accuracy</div><h3>ID read-back</h3><p>Member IDs and reference numbers are read back with an <strong>Apple-Boy-Charlie phonetic alphabet</strong> (NATO disallowed), per-digit pacing, and pronunciation normalization (HIPAA → "hip pah") — eliminating ASR failures on repeated digits.</p></div>
+      <div class="card accent"><div class="k">Compliance</div><h3>HIPAA hard gate</h3><p>No PHI is collected before verification succeeds; <strong>3-strike retry then a scripted refusal</strong>, with the ticket's <code>hipaa_verified</code> flag patched on success and caller-ID kept separate from member verification.</p></div>
+      <div class="card accent"><div class="k">Continuity</div><h3>Warm transfer</h3><p>Escalations use a <strong>consultation-room model</strong>: Sally briefs a supervisor privately (≤15s), dials the skill queue by DTMF, then merges audio into the caller's room — recording and transcript attached to the ticket.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKETING -->
+<section id="ticketing">
+  <div class="wrap">
+    <div class="seclabel rev">Agentic Ticketing</div>
+    <h2 class="rev">A Support-Ticket System the Agent Drives Itself</h2>
+    <p class="sub rev"><strong>What I owned.</strong> On top of the conversation, I designed the entire <strong>support-ticket lifecycle</strong> — agent-authored issue summaries, caller identity capture, warm hand-offs to humans with the recording and transcript attached, and provider tickets that link to <em>every</em> verified member inquired about, not just the last one.</p>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>support ticket · entity model</span><span class="tag">ticket → members → call artifacts</span></div>
+      <div class="body">
+<pre class="mermaid">
+erDiagram
+  SUPPORT_TICKET {
+    uuid ticket_id PK
+    string tenant_id
+    string category
+    string caller_identity
+    string caller_number
+    bool hipaa_verified
+    string status
+    text issue_summary_md
+  }
+  MEMBER {
+    string member_id PK
+    string name
+    string dob
+    bool hipaa_verified
+    string enrollment_status
+  }
+  TICKET_MEMBER {
+    uuid id PK
+    uuid ticket_id FK
+    string member_id FK
+  }
+  CALL_TRANSCRIPT {
+    uuid transcript_id PK
+    uuid ticket_id FK
+    text transcript
+    string recording_url
+    string summary_md
+  }
+  HANDOFF {
+    uuid handoff_id PK
+    uuid ticket_id FK
+    string debrief_recording_url
+    string debrief_transcript_url
+    string reason
+  }
+  CSR_NOTE {
+    uuid note_id PK
+    uuid ticket_id FK
+    string subject
+    text summary
+    string created_by
+  }
+  SUPPORT_TICKET ||--o{ TICKET_MEMBER : "1:* members"
+  MEMBER ||--o{ TICKET_MEMBER : "verified"
+  SUPPORT_TICKET ||--o{ CALL_TRANSCRIPT : captures
+  SUPPORT_TICKET ||--o{ HANDOFF : "on escalation"
+  SUPPORT_TICKET ||--o{ CSR_NOTE : annotates
+</pre>
+      </div>
+    </div>
+
+    <div class="cards c2 rev" style="margin-top:24px">
+      <div class="card accent">
+        <div class="k">Design intent</div>
+        <h3>Provider tickets are 1:* members</h3>
+        <p>When a provider inquires on behalf of several members, the ticket links <strong>every verified member</strong> and renders a card per member — instead of silently showing only the last one selected.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">Design intent</div>
+        <h3>Hand-off keeps the thread</h3>
+        <p>A warm transfer attaches the de-briefing <strong>recording and transcript</strong> to the ticket and continues the summary, so the human CSR inherits full context instead of starting cold.</p>
+      </div>
+    </div>
+
+    <ul class="lst rev" style="margin-top:26px">
+      <li>Markdown-formatted, agent-generated <strong>issue summaries</strong> and structured CSR notes (Subject / Summary)</li>
+      <li>Escalation paths wired for the call types that require a human — <strong>claim status, ID cards, provider search</strong></li>
+      <li>Backend, voice-agent, and front-end changes coordinated across three repos for a single coherent ticket experience</li>
+      <li>Steerage built in — the agent guides members toward preferred, in-network vendors and resources</li>
+    </ul>
+  </div>
+</section>
+
+<!-- CELERY -> AIRFLOW -->
+<section id="migration">
+  <div class="wrap">
+    <div class="seclabel rev">Backend Re-Architecture</div>
+    <h2 class="rev">Celery → Airflow: One Workflow Framework</h2>
+    <p class="sub rev"><strong>The problem.</strong> Census and claims processing lived in scattered <strong>Celery tasks</strong> — opaque retries, no run-level visibility, brittle ordering, and error handling bolted on per task. Debugging a failed enrollment file meant grepping worker logs.</p>
+    <p class="sub rev"><strong>What I did.</strong> I re-architected the data side onto <strong>Airflow (MWAA)</strong>, unifying agentic ticketing flows and batch census/claims processing into one orchestrated framework with a <strong>robust data model for validation and error handling</strong> — every record traceable, every step retryable in isolation.</p>
+
+    <div class="twocol rev">
+      <div class="diagram">
+        <div class="dhead"><span>before · scattered Celery tasks</span><span class="tag" style="color:#ff8a9a">opaque · per-task retries</span></div>
+        <div class="body">
+<pre class="mermaid">
+flowchart TB
+  classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef slow fill:#2a0a10,stroke:#ef4444,color:#ffbdbd
+  F["Census / claims file"]:::slow --> Q["Celery broker"]:::slow
+  Q --> T1["task: parse"]:::s
+  T1 --> T2["task: validate"]:::s
+  T2 --> T3["task: load"]:::s
+  T3 --> X["Failure?<br/>retry buried in logs"]:::slow
+</pre>
+        </div>
+      </div>
+      <div class="diagram">
+        <div class="dhead"><span>after · MWAA Airflow DAG</span><span class="tag">observable · resumable</span></div>
+        <div class="body">
+<pre class="mermaid">
+flowchart TB
+  classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef new fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  F["S3 upload"]:::new --> EB["EventBridge"]:::new
+  EB --> DAG["MWAA DAG"]:::new
+  DAG --> P["parse → typed model"]:::s
+  P --> V{"validate<br/>(schema + rules)"}:::new
+  V -->|ok| L["load (idempotent)"]:::s
+  V -->|reject| Q["quarantine + error record"]:::s
+  L --> M["metrics + alert on breach"]:::new
+</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="cards c3 rev" style="margin-top:28px">
+      <div class="card accent"><div class="k">Visibility</div><h3>Run-level lineage</h3><p>Every file becomes a DAG run with per-task status — failures map to a step and an error record, not a log scroll.</p></div>
+      <div class="card accent"><div class="k">Resilience</div><h3>Isolated retries</h3><p>A flaky load step retries on its own without re-parsing the whole file; bad rows quarantine instead of failing the batch.</p></div>
+      <div class="card accent"><div class="k">Reuse</div><h3>Unified framework</h3><p>The same orchestration runs ticketing flows, X12 processing, and the RAG evaluation pipeline — one mental model for the team.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- HIPAA / X12 PIPELINE -->
+<section id="pipeline">
+  <div class="wrap">
+    <div class="seclabel rev">Healthcare Data</div>
+    <h2 class="rev">HIPAA-Compliant X12 Processing</h2>
+    <p class="sub rev">I built the multi-tenant benefits backend to ingest the EDI formats the industry actually runs on: <strong>X12 834</strong> for enrollment/census and <strong>X12 837p</strong> for professional claims — with validation and error handling as first-class citizens of the data model.</p>
+
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Transaction</th><th>Purpose</th><th>What the pipeline guarantees</th></tr></thead>
+        <tbody>
+          <tr><td>X12 834</td><td class="v">Benefit enrollment &amp; maintenance (census)</td><td class="v">Member records validated against schema + business rules before load; rejects quarantined with structured error reasons</td></tr>
+          <tr><td>X12 837p</td><td class="v">Professional healthcare claims</td><td class="v">Claim lines normalized into typed models; eligible / ineligible amounts reconciled at DB level</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cards c3 rev" style="margin-top:24px">
+      <div class="card accent"><div class="k">Tenancy</div><h3>Multi-tenant isolation</h3><p>Every record carries a tenant boundary so plans, members, and claims never bleed across clients.</p></div>
+      <div class="card accent"><div class="k">Compliance</div><h3>PHI stays in AWS</h3><p>No third-party / non-HIPAA service touches PHI — Bedrock for any LLM judgment keeps data inside the account.</p></div>
+      <div class="card accent"><div class="k">Cloud</div><h3>Multi-account CDK</h3><p>Infra split across a core-services account (IAM, S3 data lake, API Gateway, KBs) and a compute account (Lambda, VPC endpoints) with cross-account IAM and public/private APIs.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- DATA INTEGRITY -->
+<section id="integrity">
+  <div class="wrap">
+    <div class="seclabel rev">Backend Hardening</div>
+    <h2 class="rev">Data Integrity &amp; the Django 5.2 Upgrade</h2>
+    <p class="sub rev">A benefits platform is only as trustworthy as its data. I eliminated duplicate records, pushed correctness <strong>down to the database</strong>, and modernized the stack — upgrading <strong>Django 4.2 → 5.2</strong> and expanding test coverage from <strong>214 to 373+ tests</strong> across 8 apps.</p>
+
+    <div class="cards c2 rev">
+      <div class="card accent">
+        <div class="k">Integrity at the DB level</div>
+        <h3>Constraints, not hope</h3>
+        <p>Converted six models from <code>unique_together</code> to explicit <code>UniqueConstraint</code>s, removing duplicate records and making uniqueness a <strong>database guarantee</strong> rather than application convention.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">Computed once, correctly</div>
+        <h3>GeneratedField for money</h3>
+        <p>Replaced a Python <code>billed</code> property with a DB-persisted <code>GeneratedField</code> (<code>ineligible + eligible</code>) so claim totals are computed and stored at the database level — no drift across code paths.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">Throughput</div>
+        <h3>Connection pooling</h3>
+        <p>Adopted Django 5.1+ <code>psycopg</code> pooling (retiring PgBouncer) with health checks, and tuned Gunicorn to 4 workers × 2 threads — 8× concurrent capacity with auto-recycling.</p>
+      </div>
+      <div class="card accent">
+        <div class="k">Confidence</div>
+        <h3>Validation + coverage</h3>
+        <p>Added comprehensive input validation across the backend and grew the suite to 373+ tests, fixing 61 stale failures and standing up coverage tooling — so regressions surface before users do.</p>
+      </div>
+    </div>
+
+    <div class="chiprow rev" style="margin-top:24px">
+      <span class="chip"><b>Django 4.2 → 5.2</b></span>
+      <span class="chip"><b>UniqueConstraint</b> ×6 models</span>
+      <span class="chip"><b>GeneratedField</b></span>
+      <span class="chip"><b>psycopg pool</b></span>
+      <span class="chip">214 → <b>373+ tests</b></span>
+      <span class="chip"><b>DRF</b> (evaluated Ninja)</span>
+    </div>
+  </div>
+</section>
+
+<!-- METRICS & IMPACT -->
+<section id="metrics">
+  <div class="wrap">
+    <div class="seclabel rev">Metrics &amp; Impact</div>
+    <h2 class="rev">What I Drove on BenePower</h2>
+    <p class="sub rev">Impact I can speak to directly — the platform I architected, the systems I owned end to end, and the reliability bar I set for shipping AI into healthcare.</p>
+
+    <div class="impact rev">
+      <div class="imp"><div class="big">0 → 1.2M+</div><div class="d">Onboarded users on the platform I architected, from zero</div></div>
+      <div class="imp"><div class="big">3 channels</div><div class="d">Unified text, image &amp; voice into one multi-agent RAG brain</div></div>
+      <div class="imp"><div class="big">3-layer eval</div><div class="d">Bedrock-native RAGAS harness: deterministic + LLM-judge + phase compliance, all in-account</div></div>
+      <div class="imp"><div class="big">6 → 10 gates</div><div class="d">Blocking quality gates that stop any unsafe deploy from shipping</div></div>
+      <div class="imp"><div class="big">Celery → Airflow</div><div class="d">Census, claims &amp; ticketing unified on one MWAA framework</div></div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:42px">Voice Load at Scale · 30k calls / quarter</div>
+    <div class="impact rev">
+      <div class="imp"><div class="big">~333/day</div><div class="d">Intake calls at 30k per quarter — 2,333/week, 10,000/month, ~20 min each</div></div>
+      <div class="imp"><div class="big">~107k/day</div><div class="d">Vendor + backend API requests — ~750k/week, ~3.2M/month (~321 per call)</div></div>
+      <div class="imp"><div class="big">~14 live</div><div class="d">Concurrent calls on an 8-hour day; plan for 30–40 at a 3× peak</div></div>
+      <div class="imp"><div class="big">200k min</div><div class="d">Transcribe audio per month — the one line that scales linearly with call length</div></div>
+      <div class="imp"><div class="big">~$13k/mo</div><div class="d">Run cost at the measured $1.30/call — ~$7.6k at the $0.76 optimized target</div></div>
+    </div>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>impact flow · human phone tree → grounded agent</span><span class="tag">the transformation</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart LR
+  classDef a fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef b fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  A["Manual benefits Q&amp;A<br/>(call center)"]:::a --> B["Multimodal multi-agent RAG"]:::b
+  B --> C["Grounded, cited answers"]:::b
+  C --> D["Agentic ticketing + warm handoff"]:::b
+  D --> E["Eval-gated, HIPAA-safe deploys"]:::b
+</pre>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:42px">Platform Signals Tracked</div>
+    <div class="chiprow rev">
+      <span class="chip"><b>faithfulness</b></span>
+      <span class="chip"><b>hallucination_rate</b></span>
+      <span class="chip"><b>context_recall</b> / precision</span>
+      <span class="chip"><b>tool_call_accuracy</b></span>
+      <span class="chip"><b>branching_accuracy</b></span>
+      <span class="chip"><b>hipaa_verification_rate</b></span>
+      <span class="chip"><b>first_response_latency</b> p50</span>
+      <span class="chip"><b>asr_robustness</b></span>
+      <span class="chip"><b>quality_gate_verdict</b></span>
+      <span class="chip"><b>task_completion_rate</b></span>
+    </div>
+  </div>
+</section>
+
+<!-- OWNERSHIP -->
+<section id="ownership">
+  <div class="wrap">
+    <div class="seclabel rev">Engineering Leadership</div>
+    <h2 class="rev">Ownership &amp; Cross-Team Map</h2>
+    <p class="sub rev">Beyond building, the role was about <strong>setting the architecture and the bar</strong> — defining how agents, the backend, the data platform, and the evaluation harness fit together, and aligning frontend, voice, data, and infra work behind one model.</p>
+
+    <div class="cards c2 rev">
+      <div class="card accent">
+        <div class="k">Personally owned</div>
+        <ul class="lst">
+          <li>Multimodal multi-agent RAG architecture (operator dispatch + specialist agents)</li>
+          <li>Real-time voice layer — Twilio→LiveKit SIP, AWS Transcribe, Polly / ElevenLabs by stage</li>
+          <li>End-to-end agentic support-ticketing system &amp; warm hand-off</li>
+          <li>Celery → Airflow (MWAA) re-architecture for census &amp; claims</li>
+          <li>HIPAA-safe RAG evaluation framework (Bedrock + RAGAS, quality gates)</li>
+          <li>Data-integrity + Django 5.2 backend hardening</li>
+          <li>Multi-account AWS CDK infra (cross-account IAM, public/private APIs)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="k">Cross-team alignment</div>
+        <ul class="lst">
+          <li><strong>Frontend</strong> — citation UX, member/provider cards (Vue · Vite)</li>
+          <li><strong>Voice / conversation</strong> — VAD, persona prompts, steerage</li>
+          <li><strong>Data engineering</strong> — golden sets, X12 834/837p ingestion</li>
+          <li><strong>Compliance / QA</strong> — HIPAA verification flow, phase gates</li>
+          <li><strong>Infra / DevOps</strong> — MWAA, Bedrock IAM, multi-account CDK</li>
+          <li><strong>Clinical partners</strong> — URAC-level plain-language answers</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="chiprow rev" style="margin-top:26px">
+      <span class="chip"><b>Python</b></span><span class="chip"><b>LangChain</b></span><span class="chip"><b>LangGraph</b></span>
+      <span class="chip"><b>LangSmith</b></span><span class="chip"><b>OpenAI</b></span><span class="chip"><b>AWS Bedrock</b></span>
+      <span class="chip"><b>LiveKit (WebRTC + SIP)</b></span><span class="chip"><b>Twilio SIP</b></span><span class="chip"><b>AWS Transcribe</b></span>
+      <span class="chip"><b>ElevenLabs / Polly</b></span><span class="chip"><b>Silero VAD</b></span><span class="chip"><b>RAGAS</b></span>
+      <span class="chip"><b>Langfuse</b></span><span class="chip"><b>Django</b></span><span class="chip"><b>Celery</b></span>
+      <span class="chip"><b>Airflow / MWAA</b></span><span class="chip"><b>Redis STM</b></span><span class="chip"><b>PostgreSQL / RDS</b></span>
+      <span class="chip"><b>Pydantic</b></span><span class="chip"><b>CDK</b></span><span class="chip"><b>Lambda / EventBridge</b></span>
+      <span class="chip"><b>SNS / S3</b></span><span class="chip"><b>Vue / Vite</b></span>
+    </div>
+  </div>
+</section>
+
+
+<header id="issues" class="part">
+  <div class="wrap">
+    <span class="role">Part II · Production Issues · Voice Intake Agent</span>
+    <h1 class="hero">THE BUGS THAT ONLY<br><span class="g">EXIST ON THE PHONE</span></h1>
+    <p class="lede">A voice agent taking precertification intake for <strong>a TPA client</strong> fails in ways no other software does. The transcript says one thing and the audio says another. A caller reads a member ID and four different systems disagree about what they heard. A dash gets pronounced as the digit two, and a CSR writes down the wrong ticket number.</p>
+    <p class="lede">This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how we found it, and the dictionaries and configs that now hold the fixes in place. Plus two production correction-of-error reports, and the debugging process that turned "Sally isn't working" into a ticket with an owner.</p>
+    <div class="stats">
+      <div class="stat"><div class="n">4 layers</div><div class="l">STT · prompt · TTS · code — one symptom, four possible owners</div></div>
+      <div class="stat"><div class="n">6 stages</div><div class="l">Ordered TTS normalization transform — order itself caused bugs</div></div>
+      <div class="stat"><div class="n">3 dicts</div><div class="l">Alphabet · pronunciation · digit maps, versioned per tenant in config</div></div>
+      <div class="stat"><div class="n sm">57,549 rows</div><div class="l">Returned by a filter that was silently ignored — on every single call</div></div>
+      <div class="stat"><div class="n sm">Listening loop</div><div class="l">Some defects are invisible in logs and transcripts. You have to hear them</div></div>
+      <div class="stat"><div class="n sm">$1.30 → $0.76</div><div class="l">AWS cost per intake call — priced from billed usage, with a costed path to &minus;42%</div></div>
+    </div>
+    <div class="partnav rev"><a href="#attribution">Attribution</a><a href="#stt">STT</a><a href="#tts">TTS</a><a href="#dictionaries">Dictionaries</a><a href="#cost">Cost / Latency</a><a href="#tco">Priced Stack</a><a href="#coe">Production COEs</a><a href="#process">Debug Process</a><a href="#framework">Build / Own</a></div>
+  </div>
+</header>
+<div class="deep">
+
+
+<!-- ATTRIBUTION -->
+<section id="attribution">
+  <div class="wrap">
+    <div class="seclabel rev">The Organizing Insight</div>
+    <h2 class="rev">One Symptom, Four Different Owners</h2>
+    <p class="sub rev">Early triage was consistently wrong, and wrong in an expensive way — we kept tuning prompts for bugs that lived in the EDI builder. Every caller-visible failure arrives as the same sentence: <em>"Sally couldn't verify the member."</em> That sentence is compatible with at least four unrelated root causes in four different files owned by different people.</p>
+
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">1</span><span class="ml">Symptom sentence reported by callers</span></div>
+      <div class="m"><span class="mv bad">4</span><span class="ml">Root-cause layers it maps to</span></div>
+      <div class="m"><span class="mv">2</span><span class="ml">Artifacts captured — and they disagree</span></div>
+      <div class="m"><span class="mv">1</span><span class="ml">Question that routes the ticket</span></div>
+      <div class="m"><span class="mv sm">two sides</span><span class="ml">Transcript carries the caller's words <em>and</em> the agent's own</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Refuse to triage from the <strong>transcript alone</strong> — the recording answers a question it cannot.</li>
+        <li>Read the transcript as <strong>two streams</strong> — what the caller said, and what the agent itself said — not as one conversation.</li>
+        <li>Make the first triage step a <strong>single yes/no</strong> that eliminates three of four layers before anyone opens a file.</li>
+      </ul>
+    </div>
+
+    <div class="callout rev">
+      <p class="q">The transcript is not what the caller heard.</p>
+      <p style="margin-top:10px">The transcript is what the speech engine <em>believed</em> on the way in, and what the model <em>generated</em> on the way out. The recording is what the caller <em>actually heard</em>. Those two disagree more often than you would expect — and the disagreement, plus <em>which side of the transcript</em> it sits on, is the diagnosis.</p>
+    </div>
+
+    <div class="tbl rev" style="margin-top:24px">
+      <table>
+        <thead><tr><th>Reported as</th><th>Actually was</th><th>Real owner</th></tr></thead>
+        <tbody>
+          <tr><td>"Sally went silent halfway through the call"</td><td class="v">Fifteen seconds of <em>legitimate</em> silence — the caller was reading a chart — made AWS end the stream, and the plugin surfaced the timeout as a hard failure</td><td><span class="lyr stt">STT</span></td></tr>
+          <tr><td>"Sally is struggling with last names"</td><td class="v">Not transcription. Verification compared raw strings, so a double surname spoken with a space never matched the stored record</td><td><span class="lyr code">code</span></td></tr>
+          <tr><td>"She wrote Calcutta with a C — the address won't match"</td><td class="v">A hard <strong>C</strong> and a <strong>K</strong> are near-indistinguishable over a phone codec. The transcript looked clean, the agent proceeded confidently, and the lookup failed on a different string entirely</td><td><span class="lyr stt">STT</span> <span class="lyr prompt">prompt</span></td></tr>
+          <tr><td>"There's an extra zero in the ID she read back"</td><td class="v">Nothing was added. Three identical digit words in a row blur into each other on the phone, so <code>1000</code> was <em>heard</em> as a fourth zero</td><td><span class="lyr tts">TTS</span></td></tr>
+          <tr><td>"Only one diagnosis code reached the record"</td><td class="v">ICD qualifier mapping in the 278 builder — the first code takes one qualifier, every code after it takes another</td><td><span class="lyr code">code</span></td></tr>
+          <tr><td>"Sally is calling a hyphen a numeric 2"</td><td class="v">The warm-transfer debrief spelled the ticket number out character by character and left a bare <code>-</code> in the stream; the voice rendered it "two"</td><td><span class="lyr tts">TTS</span></td></tr>
+          <tr><td>"The AI struggles with the male/female question"</td><td class="v"><strong>There is no gender question.</strong> It was removed months earlier — gender comes from the eligibility file. The ticket described a question the agent no longer asks</td><td><span class="lyr data">nobody</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">The Attribution Rule We Adopted</div>
+    <p class="sub rev" style="margin-bottom:18px">One question, asked first, before anyone opens a file. It routes the ticket in a single step, and it is answerable from artifacts we already capture on every call.</p>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>triage decision tree · asked before any code is read</span><span class="tag">routes to owner in one step</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart TB
+  classDef q fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  classDef stt fill:#0b2340,stroke:#4c8cff,color:#dbe8ff,stroke-width:2px
+  classDef tts fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef code fill:#241608,stroke:#f5a623,color:#ffe6b3
+  classDef pr fill:#2a0a10,stroke:#ff7a8a,color:#ffd7dd
+
+  Q{"Is the correct value<br/>in the transcript?"}:::q
+  Q -->|"NO — value never arrived"| A["STT or prompt-elicitation defect<br/>resilient STT · VAD/endpointing · input-length prompt"]:::stt
+  Q -->|"YES — value arrived intact"| B{"Where did it go wrong?"}:::q
+  B -->|"wrong on the phone"| C["TTS defect<br/>normalize_for_tts"]:::tts
+  B -->|"wrong in the 278"| D["Builder defect<br/>intake_handoff"]:::code
+  B -->|"re-asked or skipped"| E["Prompt state-machine defect"]:::pr
+</pre>
+      </div>
+    </div>
+    <p class="sub rev" style="margin-top:14px">The two artifacts answer different questions. The transcript says what was <em>written down</em>, on both sides of the conversation; the recording says what was <em>rendered</em>. One question against the transcript, then one targeted comparison.</p>
+  </div>
+</section>
+
+<!-- STT -->
+<section id="stt">
+  <div class="wrap">
+    <div class="seclabel rev">Layer 1 · Speech In</div>
+    <h2 class="rev">STT — Speech Is a Search Key, Not a Data Source</h2>
+    <p class="sub rev">The instinct is to make transcription more accurate. That is mostly a losing battle on a phone line with a provider reading a chart. The winning move was to stop treating the transcript as <em>data</em> and start treating it as a <strong>lossy key into a database that already holds the correct value</strong> — then make every consumer of that key tolerant.</p>
+
+    <div class="cards c2 rev">
+      <div class="card coral">
+        <div class="k">Issue · the call went deaf <span class="lyr stt" style="margin-left:6px">STT</span></div>
+        <h3>15 seconds of silence killed the session</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">15s</span><span class="ml">Silence before AWS ends the stream</span></div>
+          <div class="m"><span class="mv">~60</span><span class="ml">Lines in the resilient wrapper</span></div>
+          <div class="m"><span class="mv">3</span><span class="ml">Failure modes caught</span></div>
+          <div class="m"><span class="mv sm">fresh UUID</span><span class="ml">Per reconnect — reuse is rejected</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Wrap the vendor stream in a <strong>retry loop</strong> rather than tuning silence tolerance — the silence is legitimate.</li>
+            <li><strong>Rotate the session ID</strong> to a fresh UUID before every reconnect; AWS rejects a reconnect that reuses the prior request identifier.</li>
+            <li>Swallow one known plugin <code>UnboundLocalError</code> raised during shutdown; re-raise everything else.</li>
+          </ul>
+        </div>
+        <p>On a precert call, 15 seconds of silence is <em>normal</em> — the caller is reading a chart. The stock plugin surfaced the timeout as a hard stream failure, so <strong>the agent simply stopped hearing the caller</strong> mid-call.</p>
+      </div>
+      <div class="card coral">
+        <div class="k">Issue · interrupting the caller <span class="lyr stt" style="margin-left:6px">STT</span> <span class="lyr prompt">prompt</span></div>
+        <h3>The agent cut in mid-digit-sequence</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">3.0s</span><span class="ml">Tried — regressed normal turns</span></div>
+          <div class="m"><span class="mv">2.5s</span><span class="ml">Landed endpointing delay, from 2.0</span></div>
+          <div class="m"><span class="mv">0.4s</span><span class="ml">VAD min silence, from 0.3</span></div>
+          <div class="m"><span class="mv">1.5s</span><span class="ml">Min interruption duration</span></div>
+          <div class="m"><span class="mv">5</span><span class="ml">Words before it yields the floor</span></div>
+          <div class="m"><span class="mv">10</span><span class="ml">Digits the prompt waits for</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Move timing <strong>a little</strong> — 2.0 → 2.5s, not 3.0. The 3.0s attempt made the agent sluggish on "yes"/"no", which is most turns.</li>
+            <li>Do the real work in the <strong>prompt</strong>, where expected input length is known per field: wait for all 10 digits before acknowledging.</li>
+            <li>State explicitly that <strong>silence is correct behavior</strong> while a long value is being read.</li>
+          </ul>
+        </div>
+        <p>Raising the endpointing delay is the obvious fix and it <strong>regressed</strong> — timing is a blunt instrument because it's global. <strong>Prompt-level awareness is per-field:</strong> a member ID and a "yes" need opposite patience, and only the prompt layer knows which one is in flight.</p>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">Making the Search Key Noise-Tolerant</div>
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">0.85</span><span class="ml">Fuzzy first-name threshold</span></div>
+      <div class="m"><span class="mv">0.86 / 0.67</span><span class="ml">Nearest accept vs nearest reject</span></div>
+      <div class="m"><span class="mv">3</span><span class="ml">Normalizers before any DB search</span></div>
+      <div class="m"><span class="mv">0</span><span class="ml">New deps added to the HIPAA container</span></div>
+      <div class="m"><span class="mv sm">exact match</span><span class="ml">Still required on ID and last name</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li><strong>Stop trying to make STT perfect.</strong> Treat the transcript as a noisy <em>search key</em> and absorb the noise in the comparison instead.</li>
+        <li>Normalize <strong>both sides</strong> — caller input and the stored record — so the match is structural, not textual.</li>
+        <li>Allow fuzziness on <strong>first name only</strong>. ID and last name stay exact after normalization; that is the compliance boundary.</li>
+      </ul>
+    </div>
+    <div class="cards c3 rev">
+      <div class="card accent">
+        <div class="k">ID sanitization</div>
+        <h3>Strip everything but alphanumerics</h3>
+        <p>Callers read IDs with dashes, spaces and pauses; STT renders those inconsistently across calls. Before any search, drop every non-alphanumeric character and uppercase — DB IDs are uppercase.</p>
+        <div class="cb"><div class="cbh">member_verification.py</div><pre>"".join(c <span class="g">for</span> c <span class="g">in</span> str(id_str)
+        <span class="g">if</span> c.isalnum()).upper()
+
+<span class="c">"24453-8468" → "244538468"</span></pre></div>
+      </div>
+      <div class="card accent">
+        <div class="k">Name normalization</div>
+        <h3>Collapse punctuation and space</h3>
+        <p>Hyphens, apostrophes, periods and <em>all</em> whitespace fold into one lowercase token, so a double last name spoken with a space still matches structurally. <strong>No prompt needed</strong> — it's a property of the comparison.</p>
+        <div class="cb"><div class="cbh">structural equivalence</div><pre><span class="c">"Smith-Jones"  → "smithjones"
+"O'Brien"      → "obrien"
+"De La Cruz"   → "delacruz"
+"Woods Kuhlig" → "woodskuhlig"</span></pre></div>
+      </div>
+      <div class="card accent">
+        <div class="k">Fuzzy first names</div>
+        <h3>0.85 threshold, chosen deliberately</h3>
+        <p>Stdlib <code>difflib</code> Ratcliff/Obershelp at 0.85 — picked over <code>rapidfuzz</code>/Jaro-Winkler because for 3–10 character first names the results are comparable and it <strong>removed a dependency from a HIPAA-scoped container</strong>. The reasoning is written into the docstring so the next engineer doesn't "upgrade" it.</p>
+      </div>
+    </div>
+
+    <div class="tbl rev" style="margin-top:20px">
+      <table>
+        <thead><tr><th>Pair</th><th>Score</th><th>Outcome</th><th>Why that's the right call</th></tr></thead>
+        <tbody>
+          <tr><td>Kathryn / Kathrin</td><td><span class="num">~0.86</span></td><td><span class="ok">accept</span></td><td class="v">Transcription error on a real match</td></tr>
+          <tr><td>Mary-Jane / Mary Jane</td><td><span class="num">1.00</span></td><td><span class="ok">accept</span></td><td class="v">Punctuation only — normalization already handled it</td></tr>
+          <tr><td>Rob / Robert</td><td><span class="num">~0.67</span></td><td><span class="no">reject</span></td><td class="v">Nickname — needs an alias table, <strong>not</strong> a similarity score</td></tr>
+          <tr><td>John / Jane</td><td><span class="num">~0.57</span></td><td><span class="no">reject</span></td><td class="v">Different person</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout rev">
+      <p><strong>The defensible part is what we refused to fix here.</strong> A caller gave a member's familiar name where the record held the legal one — the <code>Rob</code> / <code>Robert</code> row above, arriving as a real support ticket. That was closed with a <strong>prompt</strong> change requiring legal names — not by loosening the threshold. Loosening a similarity threshold on a HIPAA identity check to catch nicknames trades a compliance boundary for a UX convenience. That trade is never worth it, and the threshold is exactly where someone will be tempted to make it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TTS -->
+<section id="tts">
+  <div class="wrap">
+    <div class="seclabel rev">Layer 2 · Speech Out</div>
+    <h2 class="rev">TTS — Six Ordered Stages, and the Order Is Load-Bearing</h2>
+    <p class="sub rev">Every chunk of model output passes through <code>normalize_for_tts()</code> before it reaches the voice. It is six stages applied in a fixed order, and <strong>several production bugs were caused purely by stage ordering</strong> rather than by any individual stage being wrong.</p>
+
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">6</span><span class="ml">Ordered stages in the transform</span></div>
+      <div class="m"><span class="mv bad">4</span><span class="ml">Stages where order alone caused a bug</span></div>
+      <div class="m"><span class="mv">4+</span><span class="ml">Digits before digit-by-digit kicks in</span></div>
+      <div class="m"><span class="mv">400ms</span><span class="ml">SSML break between repeated digits</span></div>
+      <div class="m"><span class="mv sm">longest first</span><span class="ml">Dictionary key ordering, not insertion order</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Treat the transform as a <strong>declared pipeline with a fixed order</strong>, not a bag of string replacements — the order is the contract.</li>
+        <li>Escape <em>before</em> anything else, so model output can never break the SSML parser downstream.</li>
+        <li>Fix pronunciation collisions by <strong>sorting keys longest-first</strong>, not by hand-tuning individual entries.</li>
+      </ul>
+    </div>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>normalize_for_tts · six ordered stages</span><span class="tag warn">order is load-bearing</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart TB
+  classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef hot fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  classDef io fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+
+  IN["LLM text chunk"]:::io --> S0
+  S0["0 · XML-escape if SSML<br/>so model output can't break the parser"]:::s --> S1
+  S1["1 · Pronunciation map<br/>LONGEST KEY FIRST"]:::hot --> S2
+  S2["2 · Acronym expansion<br/>CPT to C P T, unless say-as-word"]:::hot --> S3
+  S3["3 · Long numerics, 4+ digits<br/>digit-by-digit + collapse runs"]:::hot --> S4
+  S4["4 · Single digits<br/>strip hallucinated 'five as in Sam'"]:::s --> S5
+  S5["5 · Single letters in readback<br/>T becomes T - as in Tom -"]:::hot --> S6
+  S6["6 · SSML 400ms break between<br/>consecutive identical digit words"]:::s --> OUT["TTS engine"]:::io
+</pre>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:42px">The Member-ID Decoding Bugs</div>
+    <div class="cards c2 rev">
+      <div class="card coral">
+        <div class="k">Issue · repeated zeros <span class="lyr tts" style="margin-left:6px">TTS</span></div>
+        <h3>"1000" and the extra-zero problem</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">+1</span><span class="ml">Phantom zero callers reported hearing</span></div>
+          <div class="m"><span class="mv">3+</span><span class="ml">Run length before collapsing kicks in</span></div>
+          <div class="m"><span class="mv">2</span><span class="ml">Left alone — already intelligible</span></div>
+          <div class="m"><span class="mv">400ms</span><span class="ml">SSML break between identical digits</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li><code>&lt;break&gt;</code> tags alone did <strong>not</strong> fix it — three identical tokens still blur even with pauses between them.</li>
+            <li>Convert runs to <strong>natural language</strong> instead, because English already has words for this.</li>
+            <li>Set the threshold where the error actually starts, <strong>not</strong> at every repeat.</li>
+          </ul>
+        </div>
+        <div class="cb"><div class="cbh">_collapse_consecutive()</div><pre><span class="c">"1000"      →</span> <span class="g">"one, &lt;break/&gt; triple zero"</span>
+
+zero ×3     → <span class="g">"triple zero"</span>
+zero ×4     → <span class="g">"quadruple zero"</span>
+zero ×5+    → <span class="g">"zero repeated five times"</span>
+zero ×2     → <span class="a">left alone — 2 is intelligible</span></pre></div>
+        <div class="tie"><b>Why 2 is left alone</b>Every transform costs naturalness. Two identical digits are reliably heard; collapsing them would make the agent sound stilted for <strong>zero accuracy gain</strong>. The threshold is where the error actually starts.</div>
+      </div>
+      <div class="card coral">
+        <div class="k">Issue · the invisible one <span class="lyr tts" style="margin-left:6px">TTS</span></div>
+        <h3>The hyphen that was spoken as "two"</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">1</span><span class="ml">Character mis-rendered</span></div>
+          <div class="m"><span class="mv bad">100%</span><span class="ml">Of warm transfers affected</span></div>
+          <div class="m"><span class="mv sm">0 log lines</span><span class="ml">Evidence in any text artifact</span></div>
+          <div class="m"><span class="mv sm">audio only</span><span class="ml">Where the defect existed</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>The debrief spelled the ticket number with a naive <code>" ".join(list(...))</code>, leaving a bare <code>-</code> in the stream.</li>
+            <li>The voice model rendered that hyphen as the digit <strong>two</strong> — so the CSR wrote down the wrong ticket.</li>
+            <li>Fix: a <code>_space_for_tts()</code> helper that maps <code>-</code> to the literal word <em>dash</em>.</li>
+          </ul>
+        </div>
+        <div class="tie bad"><b>Why this class of bug is special</b>You <strong>cannot find this by reading code or transcripts</strong>. The transcript said <code>-</code>. The audio said "two". It was found by a human listening to a call recording. Voice systems need a <strong>listening loop</strong>, not just a logging loop.</div>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:42px">The Stage-Ordering Bugs</div>
+    <div class="cards c2 rev">
+      <div class="card warn">
+        <div class="k">Ordering bug · stage 1</div>
+        <h3>Shorter key ate the longer one</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv amb">1</span><span class="ml">Line changed to fix it</span></div>
+          <div class="m"><span class="mv amb">~40</span><span class="ml">Map entries exposed to the ordering</span></div>
+          <div class="m"><span class="mv sm">insertion order</span><span class="ml">The implicit dependency</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>With both <code>taxonomy</code> and <code>taxonomy code</code> in the map, dict insertion order matched the <strong>shorter key first</strong>, producing <em>"specialty code"</em>.</li>
+            <li>Iterate the map sorted by <strong>key length, longest first</strong> — removes the dependency on insertion order entirely.</li>
+          </ul>
+        </div>
+        <div class="cb"><div class="cbh">the whole fix</div><pre><span class="g">sorted</span>(PRONUNCIATION_MAP.items(),
+       key=<span class="g">lambda</span> x: len(x[<span class="a">0</span>]),
+       reverse=<span class="a">True</span>)</pre></div>
+      </div>
+      <div class="card warn">
+        <div class="k">Ordering bug · stages 2 + 5 collide</div>
+        <h3>"N P I," became "I — as in Ida"</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv amb">2</span><span class="ml">Stages colliding — 2 and 5</span></div>
+          <div class="m"><span class="mv amb">0</span><span class="ml">Stages individually wrong</span></div>
+          <div class="m"><span class="mv sm">lookbehind</span><span class="ml">The entire fix</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Stage 2 expands <code>NPI</code> → <code>N P I</code>. Stage 5 then matched the trailing <code>I,</code> as a readback character and spoke it as <em>"I — as in Ida —"</em> mid-sentence.</li>
+            <li>Neither stage is wrong alone; <strong>the composition is</strong>.</li>
+            <li>Negative lookbehind: don't treat a letter as a readback character if it's <strong>preceded by another single letter and a space</strong>.</li>
+          </ul>
+        </div>
+        <div class="cb"><div class="cbh">common.py</div><pre>r"<span class="a">(?&lt;![A-Z] )</span>(\bthe letter\s+)?\b([A-Z])\b(?:\.\.\.|,)"</pre></div>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:42px">Letters, Acronyms and Codes</div>
+    <div class="cards c2 rev">
+      <div class="card accent">
+        <div class="k">Issue · alphabet drift <span class="lyr prompt" style="margin-left:6px">prompt</span> <span class="lyr tts">TTS</span></div>
+        <h3>NATO vs the customer's alphabet</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">2</span><span class="ml">Alphabets in use at once</span></div>
+          <div class="m"><span class="mv bad">1 call</span><span class="ml">Drift happened within a single call</span></div>
+          <div class="m"><span class="mv">26</span><span class="ml">Entries in the configured map</span></div>
+          <div class="m"><span class="mv">2</span><span class="ml">Enforcement layers</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li><strong>Prompt</strong> — an explicit prohibition: <em>"THIS IS THE ONLY PHONETIC ALPHABET YOU MAY USE. Do NOT use NATO."</em></li>
+            <li><strong>Code</strong> — the single-letter replacement reads from the config map, so even a bare letter from the model gets the configured word supplied at the TTS layer.</li>
+          </ul>
+        </div>
+        <p>The model drifted between NATO (<em>Tango, Kilo, Romeo</em>) and the customer-service alphabet (<em>Tom, King, Robert</em>) <strong>within a single call</strong> — so the same letter came back differently on first and second readback, and callers corrected letters that were never wrong.</p>
+        <div class="tie"><b>The pattern</b><strong>Prompt for intent, code for enforcement.</strong> A prompt cannot guarantee an invariant; it can only ask.</div>
+      </div>
+      <div class="card accent">
+        <div class="k">Issue · confusable letters <span class="lyr prompt" style="margin-left:6px">prompt</span></div>
+        <h3>C or K, Z or C, M or N, B or D, P or T</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">4</span><span class="ml">Confusable pairs handled</span></div>
+          <div class="m"><span class="mv bad">silent</span><span class="ml">Failure mode — agent proceeds confidently</span></div>
+          <div class="m"><span class="mv sm">on correction</span><span class="ml">When the rule fires</span></div>
+          <div class="m"><span class="mv">0</span><span class="ml">Added turns on clean calls</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Fire the disambiguation <strong>only when the caller corrects a letter</strong> — asking on every letter would double the length of every clean call.</li>
+            <li>Offer the two candidates <strong>by phonetic word</strong>, not by letter, so the question isn't itself ambiguous over the same codec.</li>
+            <li>Always re-confirm the corrected value before proceeding.</li>
+          </ul>
+        </div>
+        <p>These pairs are near-indistinguishable over a phone codec, and the failure is <strong>silent</strong>. It bites hardest on spelled surnames and place names — a hard <em>C</em> versus a <em>K</em> produces a completely different lookup and a failed verification that <em>looks like</em> the member doesn't exist.</p>
+        <div class="cb"><div class="cbh">intake prompt</div><pre><span class="c">If the caller corrects a letter that sounds
+similar (Z vs C, M vs N, B vs D, P vs T),
+disambiguate explicitly:</span>
+
+  <span class="g">"Was that Z as in Zebra,
+   or C as in Charlie?"</span>
+
+<span class="c">Always confirm the corrected value
+before proceeding.</span></pre></div>
+      </div>
+      <div class="card accent">
+        <div class="k">Issue · acronyms as labels <span class="lyr tts" style="margin-left:6px">TTS</span> <span class="lyr prompt">prompt</span></div>
+        <h3>"C P T" the label vs C-P-T the value</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv">2+</span><span class="ml">Capitals that trigger expansion</span></div>
+          <div class="m"><span class="mv">7</span><span class="ml">Label acronyms exempted</span></div>
+          <div class="m"><span class="mv bad">3×</span><span class="ml">Longer if spelled phonetically</span></div>
+          <div class="m"><span class="mv sm">values only</span><span class="ml">When phonetics apply</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Expand acronyms to spaced letters — <code>CPT</code> → <em>"C P T"</em> — but <strong>stop there</strong> for known labels.</li>
+            <li>Exempt the seven routine ones (<code>NPI</code>, <code>CPT</code>, <code>ICD</code>, <code>DOB</code>, <code>EIN</code>, <code>DME</code>, member ID) from phonetic readback.</li>
+            <li>Reserve the phonetic alphabet for <strong>caller-provided values</strong> — the things that must be exactly right.</li>
+          </ul>
+        </div>
+        <p>Without the exception, a routine question became <em>"What is the C as in Charlie, P as in Paul, T as in Tom code?"</em> — which makes the agent sound broken and lengthens every call.</p>
+        <div class="cb"><div class="cbh">intake prompt — exception rule</div><pre><span class="c">When you SAY "NPI", "member ID", "CPT",
+"ICD", "DOB", "EIN" or "DME" as part of a
+sentence, just say the letters naturally.</span>
+
+<span class="g">CORRECT:</span> "What is the provider's N P I?"
+<span class="r">WRONG:</span>   "What is the provider's N as in
+          Nora, P as in Paul, I as in Ida?"
+
+<span class="c">The phonetic alphabet is ONLY for reading
+back caller-provided VALUES.</span></pre></div>
+        <div class="tie"><b>The distinction that matters</b>Phonetic spelling is for <strong>values you must get exactly right</strong>. Applying it to vocabulary makes the agent sound broken and lengthens every call.</div>
+      </div>
+      <div class="card accent">
+        <div class="k">Issue · clinical codes <span class="lyr code" style="margin-left:6px">code</span> <span class="lyr prompt">prompt</span></div>
+        <h3>Run-together CPTs and missing ICD dots</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv">5</span><span class="ml">Chars — CPT is invariantly this long</span></div>
+          <div class="m"><span class="mv">3</span><span class="ml">Chars before the ICD-10 dot</span></div>
+          <div class="m"><span class="mv bad">0%</span><span class="ml">Of callers who say "dot"</span></div>
+          <div class="m"><span class="mv">1</span><span class="ml">Canonical form, two renderings</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li><strong>CPT run-together</strong> — multiple codes arrived as one undifferentiated token. Since CPT is invariantly 5 characters, split on that boundary and read each code back individually.</li>
+            <li><strong>ICD-10 dots</strong> — callers pause rather than saying "dot", so STT never produces it. Insert it <strong>structurally</strong> in the validator instead of asking anyone for punctuation they don't speak.</li>
+          </ul>
+        </div>
+        <div class="cb"><div class="cbh">intake_validators.py</div><pre>code_nodot = code.replace(<span class="g">"."</span>, <span class="g">""</span>)
+<span class="g">if</span> len(code_nodot) &gt; <span class="a">3</span>:
+    normalized = code_nodot[:<span class="a">3</span>] + <span class="g">"."</span> + code_nodot[<span class="a">3</span>:]
+
+<span class="c">M19011 → M19.011</span></pre></div>
+        <div class="tie"><b>One canonical form, two renderings</b>Stored with the dot for human readability, stripped at 278 output time. Neither the caller nor the model is ever asked to produce punctuation they don't speak.</div>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:42px">Reducing What Humans Have to Transcribe</div>
+    <div class="cards c2 rev">
+      <div class="card accent">
+        <div class="k">Fix · fewer spoken units</div>
+        <h3>19 spoken units → 6</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">19</span><span class="ml">Spoken units before</span></div>
+          <div class="m"><span class="mv">6</span><span class="ml">Spoken units after</span></div>
+          <div class="m"><span class="mv">68%</span><span class="ml">Reduction in what a human transcribes</span></div>
+          <div class="m"><span class="mv">4</span><span class="ml">Ambiguous letters excluded</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Move the human-facing surface to a 6-character <strong>record locator</strong>, generated backend-side.</li>
+            <li>Use the <strong>Crockford base32</strong> alphabet, which excludes <code>I</code>, <code>L</code>, <code>O</code> and <code>U</code> precisely because they're ambiguous spoken or written.</li>
+            <li>Keep the long form as the internal key, with a fallback if no locator comes back.</li>
+          </ul>
+        </div>
+        <div class="cb"><div class="cbh">human-facing surface only</div><pre><span class="r">Before:</span> T-K-T-dash-Y-Y-Y-Y-M-M-D-D-dash-N-N-N-N
+        <span class="c">19 spoken units</span>
+
+<span class="g">After:</span>  X-Y-A-2-G-C
+        <span class="c">6 spoken units</span></pre></div>
+        <div class="tie"><b>What we deliberately did not change</b>The long form stays the internal key for API calls, S3 paths and CRM references, with a fallback if the backend returns no locator. <strong>Only the spoken surface changed.</strong></div>
+      </div>
+      <div class="card accent">
+        <div class="k">Fix · streaming truncation</div>
+        <h3>The last character gets clipped</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">1</span><span class="ml">Final digit dropped</span></div>
+          <div class="m"><span class="mv bad">1st only</span><span class="ml">Readback affected — 2nd was fine</span></div>
+          <div class="m"><span class="mv">2</span><span class="ml">Layers in the fix</span></div>
+          <div class="m"><span class="mv sm">char count</span><span class="ml">Invariant handed to the model</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li><strong>Tool layer</strong> — return the explicit <strong>character count</strong> alongside the value, so the model has an invariant it can check itself against.</li>
+            <li><strong>Prompt layer</strong> — require a trailing phrase after the number, so the last token is never the last thing synthesized.</li>
+          </ul>
+        </div>
+        <div class="cb"><div class="cbh">tool return — a checkable invariant</div><pre><span class="g">f"The reference number is: {n} "</span>
+<span class="g">f"(total {count} characters). "</span>
+<span class="g">f"You MUST read back ALL characters "</span>
+<span class="g">f"exactly — do not drop any digits."</span></pre></div>
+        <div class="tie"><b>Why the trailing phrase</b>The last token of an utterance is the most likely to be cut by a streaming synthesizer. Requiring filler — <em>"…, is that correct?"</em> — is a <strong>TTS workaround implemented in the prompt layer</strong>, which is exactly the kind of cross-layer fix the attribution tree exists to make legible.</div>
+      </div>
+    </div>
+
+    <div class="callout rev bad">
+      <p><strong>The one where the prompt was never going to work.</strong> The agent kept saying an internal word — "taxonomy" — to callers. Telling the model "NEVER say taxonomy" did nothing, because the word was re-entering through a <strong>tool error message</strong>: a required parameter failed Pydantic validation, and the validation error containing the word was returned into the model's context, which then asked the caller for it.</p>
+      <p style="margin-top:12px">It took four layers to actually remove: make the field optional, rename the parameter, delete the word from the prompt entirely (<em>even a prohibition teaches the token</em>), and add a pronunciation-map entry as a last-resort net. <strong>When a model keeps saying something you've forbidden, grep your tool schemas and validation strings.</strong> Prompts don't override the text your own code feeds back into the context.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DICTIONARIES -->
+<section id="dictionaries">
+  <div class="wrap">
+    <div class="seclabel rev">Where the Fixes Live</div>
+    <h2 class="rev">The Dictionaries — Config as Tenant Long-Term Memory</h2>
+    <p class="sub rev">Almost none of the above lives in code. It lives in a per-tenant <code>config.yaml</code> that is <strong>versioned, reviewable, and hot-swappable per call</strong>. That framing is the point: the pronunciation dictionary is not general knowledge, it is <em>this customer's vocabulary</em>, accumulated by listening to their calls. It belongs in config precisely because it is neither code nor prompt.</p>
+
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">26</span><span class="ml">Letters in the customer's own alphabet</span></div>
+      <div class="m"><span class="mv">2</span><span class="ml">Pronunciation classes, opposite treatment</span></div>
+      <div class="m"><span class="mv">~40</span><span class="ml">Tenant-specific plan-name entries</span></div>
+      <div class="m"><span class="mv">97</span><span class="ml">Tests on the CPT classifier alone</span></div>
+      <div class="m"><span class="mv sm">config, not code</span><span class="ml">A new pronunciation ships without a release</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Keep the vocabulary <strong>out of both code and prompt</strong> — it is neither logic nor instruction, it is <em>this tenant's</em> accumulated speech knowledge.</li>
+        <li>Make each dictionary a <strong>flat, reviewable map</strong> a non-engineer can read in a PR, not a nested structure.</li>
+        <li>Treat every non-prod environment as a <strong>delta on the prod config</strong>, so the base file is always the shippable one.</li>
+      </ul>
+    </div>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>config/agents/&lt;agency&gt;/&lt;surface&gt;/config.yaml</span><span class="tag">versioned · reviewable · per-tenant</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart LR
+  classDef root fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef dict fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef other fill:#1a1040,stroke:#4c3a9e,color:#e6dcff
+
+  C["config.yaml"]:::root --> N["tts.normalization"]:::root
+  N --> P["pronunciations<br/>domain lexicon"]:::dict
+  N --> D["digit_map<br/>0-9 to words"]:::dict
+  N --> A["alphabet_map<br/>26 letters, customer's own"]:::dict
+  C --> T["vad · barge_in<br/>min_endpointing_delay"]:::other
+  C --> S["system_prompt<br/>the state machine"]:::other
+  C --> R["transfer_routing<br/>skill queues by DTMF"]:::other
+  C --> O["overrides<br/>local · beta · preprod"]:::other
+</pre>
+      </div>
+    </div>
+
+    <div class="cards c2 rev" style="margin-top:24px">
+      <div class="card accent">
+        <div class="k">Dictionary 1 · alphabet_map</div>
+        <h3>26 letters, the customer's own alphabet</h3>
+        <p>Not NATO — the customer-service alphabet their CSRs have always used, so the agent and the humans it transfers to speak the same language.</p>
+        <div class="cb"><div class="cbh">alphabet_map — 26 entries</div><pre>A Apple    J John     S Sam
+B Boy      K King     T Tom
+C Charlie  L Lincoln  U Union
+D David    M Mary     V Victor
+E Edward   N Nora     W William
+F Frank    O Ocean    X X-ray
+G George   P Paul     Y Young
+H Henry    Q Queen    Z Zebra
+I Ida      R Robert</pre></div>
+        <div class="tie"><b>One special case</b><code>W</code> renders as <strong>"Double U"</strong> — it's the only letter whose name is three syllables, and streaming TTS was clipping it.</div>
+      </div>
+      <div class="card accent">
+        <div class="k">Dictionary 2 · pronunciations</div>
+        <h3>Two classes, opposite treatment</h3>
+        <p>The critical distinction is <strong>acronyms</strong> (pronounced as words) versus <strong>initialisms</strong> (spelled letter by letter). Getting this backwards is instantly audible.</p>
+        <div class="cb"><div class="cbh">say-as-word — must NOT be spelled</div><pre>HIPAA   → <span class="g">"hip pah"</span>
+URAC    → <span class="g">"yore rack"</span>
+MAGI    → <span class="g">"maggie"</span>
+QSEHRA  → <span class="g">"Q sarah"</span>
+MEC     → <span class="g">"meck"</span>
+COBRA · TRICARE · CHIP · SHOP</pre></div>
+        <div class="cb"><div class="cbh">spell-it-out — initialisms</div><pre>CPT → <span class="g">"C P T"</span>    NPI → <span class="g">"N P I"</span>
+HMO · PPO · EPO · POS · HSA · HRA
+FSA · DME · CMS · CSR · ACA · APTC
+EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
+        <div class="tie"><b>Plus phrases and plan names</b>Multi-word entries like <code>"Tax ID" → "tax identification number"</code>, and ~40 tenant-specific plan-name entries covering words the voice model mangles. That list is <strong>not generalizable</strong> — which is exactly why it's config.</div>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">Two Enforcement Layers, Deliberately</div>
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">3</span><span class="ml">Concerns needing <em>both</em> layers</span></div>
+      <div class="m"><span class="mv">2</span><span class="ml">Code-only — invariants</span></div>
+      <div class="m"><span class="mv">1</span><span class="ml">Prompt-only — phrasing</span></div>
+      <div class="m"><span class="mv sm">code wins</span><span class="ml">Any compliance property, always</span></div>
+    </div>
+    <p class="sub rev" style="margin-bottom:18px">Prompts express intent and are cheap to iterate. Code guarantees invariants. Anything that is a <strong>compliance or data-integrity property</strong> lives in code; anything that is style or phrasing lives in the prompt. Several issues above needed both.</p>
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Concern</th><th>Prompt layer</th><th>Code layer</th></tr></thead>
+        <tbody>
+          <tr><td>Which phonetic alphabet</td><td class="v">"Do NOT use NATO…"</td><td class="v"><code>ALPHABET_MAP</code> in the single-letter replacement</td></tr>
+          <tr><td>Say "specialty" not the internal word</td><td class="v">Word removed from the prompt entirely</td><td class="v">Pronunciation-map net + renamed tool parameter</td></tr>
+          <tr><td>Read back every character</td><td class="v">CRITICAL instruction + trailing phrase</td><td class="v">Character count returned by the tool</td></tr>
+          <tr><td>Digit pacing</td><td class="v">—</td><td class="v"><code>_collapse_consecutive</code> + SSML breaks</td></tr>
+          <tr><td>Confusable-letter disambiguation</td><td class="v">"Was that Z as in Zebra or C as in Charlie?"</td><td class="v">—</td></tr>
+          <tr><td>Clinical question branching</td><td class="v">—</td><td class="v">CPT range lookup from YAML decision trees</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cards c2 rev" style="margin-top:22px">
+      <div class="card accent">
+        <div class="k">Config pattern · decision trees as data</div>
+        <h3>Clinical questioning is not in the prompt</h3>
+        <p>A CPT code maps to a category via range lookup from a YAML file, and only the relevant branch is injected into context. CPT 97116 (gait training) resolves to physical therapy and pulls the PT questions — <strong>no other questions enter the context at all</strong>.</p>
+        <div class="tie"><b>Two benefits</b>The clinical team edits YAML rather than a 900-line prompt, and the classifier is <strong>unit-testable</strong> — that test file is the largest in the suite at 97 tests.</div>
+      </div>
+      <div class="card accent">
+        <div class="k">Config pattern · stage overlays</div>
+        <h3>Base config is always prod-ready</h3>
+        <p>Each non-prod environment is a <em>delta</em> under <code>overrides:</code>, deep-merged at load. The stage is baked into the image as an env var rather than supplied by a runtime secret that could drift from the deployed artifact.</p>
+        <div class="tie"><b>What it prevented</b>A beta image can no longer accidentally dial the <strong>production contact centre</strong>. The deployment target became a property of the artifact.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COST -->
+<section id="cost">
+  <div class="wrap">
+    <div class="seclabel rev">Cost &amp; Latency</div>
+    <h2 class="rev">Paying for the Prompt Once, Not Every Turn</h2>
+    <p class="sub rev">A voice agent re-sends its entire system prompt and tool schema on <em>every single turn</em> — a 30-turn call pays for the same ~900-line state machine thirty times. Two changes fixed most of that bill, and a third moved the accounting itself out of the agent.</p>
+
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">0.1×</span><span class="ml">Cache-read rate vs. standard input</span></div>
+      <div class="m"><span class="mv amb">1.25×</span><span class="ml">Cache-write premium, paid once per call</span></div>
+      <div class="m"><span class="mv">2</span><span class="ml">Cached segments — system prompt + tool schemas</span></div>
+      <div class="m"><span class="mv">3</span><span class="ml">Summary calls sharing one cached prefix</span></div>
+      <div class="m"><span class="mv">0</span><span class="ml">Agent redeploys when a price changes</span></div>
+      <div class="m"><span class="mv sm">every call</span><span class="ml">Cache hit ratio emitted, not assumed</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Cache the two segments that <strong>never change within a call</strong> — the system prompt and the tool schemas — so each turn pays full rate only on the conversational delta.</li>
+        <li>Enable it on the <strong>client factory</strong>, not per call site, so every agent, background job and the QA caller inherits it and nobody can forget.</li>
+        <li><strong>Measure the hit ratio</strong> per call and ship it as telemetry — a cache you don't measure is a cache you assume is working.</li>
+        <li>Emit <strong>raw token counts</strong> from the agent and apply pricing downstream, so a rate change is a pipeline edit and old calls can be re-costed retroactively.</li>
+      </ul>
+    </div>
+
+    <p>The economics are lopsided enough to make this the single highest-leverage change: a cache read bills at <strong>a tenth</strong> of a standard input token, against a one-time write premium of 1.25×. The break-even is roughly two turns — every real call clears it long before the caller finishes spelling their member ID.</p>
+
+    <div class="tbl rev" style="margin-top:20px">
+      <table>
+        <thead><tr><th>Segment</th><th>Changes within a call?</th><th>Treatment</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>System prompt — the state machine</td><td class="v"><span class="ok">never</span></td><td class="v"><code>cache_system=True</code></td><td class="v">Largest single block and byte-identical on every turn</td></tr>
+          <tr><td>Tool schemas</td><td class="v"><span class="ok">never</span></td><td class="v"><code>cache_tools=True</code></td><td class="v">Dozens of function signatures, resent verbatim each turn</td></tr>
+          <tr><td>Conversation history</td><td class="v"><span class="no">every turn</span></td><td class="v">uncached</td><td class="v">Grows by one exchange per turn — nothing stable to cache</td></tr>
+          <tr><td>Injected clinical branch</td><td class="v"><span class="no">once mid-call</span></td><td class="v">uncached</td><td class="v">Only the CPT-relevant questions enter context at all, so it's small by construction</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout rev">
+      <p><strong>Enabling it in the factory was the actual decision.</strong> The flags live in <code>create_llm_client()</code>, which every agent and background call goes through — the concierge, the intake agent, the summary generator, even the QA caller that dials in to test us. Putting them at each call site would have worked identically on day one and drifted within a month, because the next engineer adding an agent has no reason to know the flags exist.</p>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">The Accounting Lives in the Pipeline, Not the Agent</div>
+    <div class="mstrip rev">
+      <div class="m"><span class="mv sm">raw tokens</span><span class="ml">All the agent emits — no dollars</span></div>
+      <div class="m"><span class="mv">4</span><span class="ml">Model rate cards in the pipeline's table</span></div>
+      <div class="m"><span class="mv sm">retroactive</span><span class="ml">Old calls re-cost when rates change</span></div>
+      <div class="m"><span class="mv sm">pinned</span><span class="ml">Pricing version stamped on every enriched record</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>The agent logs one structured <code>llm_usage_summary</code> event per call — per-call tokens, cache reads, TTFT, tokens/sec, and whether the response was interrupted.</li>
+        <li>The <strong>eval DAG owns the rate card</strong> and enriches each record with <code>cost_usd</code>, stamping the pricing version alongside it for auditability.</li>
+        <li>Cache writes aren't reported by the framework, so the first call is <strong>inferred</strong> as a write — an approximation, and it's written down as one rather than presented as measured.</li>
+      </ul>
+    </div>
+    <p>Cost is a <em>pricing</em> question, not an <em>agent</em> question. Vendors reprice quarterly; a voice agent that hardcodes dollar rates needs a redeploy — and a re-certification — every time they do. Keeping the arithmetic in the pipeline also means the entire back catalogue can be recalculated against a new rate card, which is the difference between a cost number you can defend in a renewal conversation and one you can only quote.</p>
+
+    <div class="seclabel rev" style="margin-top:44px">The Pipeline Reads an Object, Not a Transcript</div>
+    <div class="mstrip rev">
+      <div class="m"><span class="mv sm">during</span><span class="ml">Record built mid-call, not extracted after</span></div>
+      <div class="m"><span class="mv">1</span><span class="ml">Schema, vendored — agent and pipeline share it</span></div>
+      <div class="m"><span class="mv">0</span><span class="ml">Extra LLM passes over the transcript</span></div>
+      <div class="m"><span class="mv sm">partial ok</span><span class="ml">Incomplete record still hands off what it has</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Commit each intake section through a <strong>validated tool call</strong> as the caller gives it, so the structured record accumulates <em>during</em> the conversation.</li>
+        <li>On call exit, assemble and upload a <strong>validated JSON object</strong> to S3 — EventBridge picks it up and the 278 pipeline reads fields, never prose.</li>
+        <li><strong>Vendor the schema</strong> from the shared data library so the agent validates against the same rules the pipeline will apply, and rejection happens on the call rather than hours later.</li>
+        <li>On validation failure, upload a <strong>partial record</strong> rather than nothing — a half-captured intake is triageable; a dropped one isn't.</li>
+      </ul>
+    </div>
+    <p>The alternative — hand the pipeline a transcript and have it extract fields with another model call — costs a second full pass over the conversation per call and introduces a second place the extraction can be wrong. Building the object during the call makes the handoff <strong>free at the boundary</strong> and gives the caller a chance to correct a field while they're still on the line.</p>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>two outputs per call · neither is the transcript</span><span class="tag">structured at the boundary</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart LR
+  classDef live fill:#0b2340,stroke:#4c8cff,color:#dbe8ff,stroke-width:2px
+  classDef obj fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef pipe fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+
+  C["Live call<br/>cached system prompt + tools"]:::live --> R["IntakeRecord JSON<br/>validated, built during the call"]:::obj
+  C --> U["llm_usage_summary<br/>raw tokens + cache hits"]:::obj
+  R --> S["S3 + EventBridge"]:::pipe
+  S --> X["278 pipeline<br/>reads fields, not prose"]:::pipe
+  U --> D["Eval DAG<br/>applies the rate card"]:::pipe
+  D --> M["Cost per call<br/>re-costable, version-pinned"]:::pipe
+</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TCO -->
+<section id="tco">
+  <div class="wrap">
+    <div class="seclabel rev">Priced Stack · STT · TTS · LLM</div>
+    <h2 class="rev">What One Call Actually Costs, and What I Could Prove</h2>
+    <p class="sub rev">I opened this as a cost investigation: <em>why does one intake call cost $1.30?</em> It came back with three things I did not go looking for — a <strong>P0 caller-facing speech defect</strong>, an <strong>adversarial review that refuted four of my own ten core claims</strong>, and a cost plan whose second-largest modelled lever turned out to be worth <strong>zero</strong>. What shipped is the part that survived proof.</p>
+
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">$1.3024</span><span class="ml">Measured AWS cost per call — priced from billed usage</span></div>
+      <div class="m"><span class="mv">$0.7597</span><span class="ml">Costed target — <strong>&minus;42%</strong>, lever by lever</span></div>
+      <div class="m"><span class="mv sm">~$70,552/yr</span><span class="ml">At 130,000 calls — LiveKit and carrier excluded from both columns</span></div>
+      <div class="m"><span class="mv amb">86%</span><span class="ml">Of LLM spend is re-sent conversation context</span></div>
+      <div class="m"><span class="mv bad">4 / 10</span><span class="ml">Core claims <strong>refuted</strong> under red team</span></div>
+      <div class="m"><span class="mv sm">per lever</span><span class="ml">Every dollar in the target column has a named change behind it</span></div>
+    </div>
+
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li><strong>Price the stack against billed usage first</strong>, per line, before proposing a single change — the argument about what to fix is unwinnable until the denominator exists.</li>
+        <li>Carry a <strong>core-claim proof ledger</strong> through the whole investigation: every headline claim gets a state — <code>PROVEN</code>, <code>PARTIAL</code>, <code>UNPROVEN</code>, <code>REFUTED</code> — and a named probe that would settle it.</li>
+        <li><strong>Scope approval to the claims that are proven.</strong> Work that <em>obtains</em> proof ships; work that <em>asserts</em> an unproven capability does not.</li>
+        <li>Print the caveats <strong>beside</strong> the number, not in an appendix — including the ones that make the number look worse.</li>
+      </ul>
+    </div>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>where the dollars sit · one intake call</span><span class="tag">baseline left, target right</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart LR
+  classDef total fill:#0b2340,stroke:#4c8cff,color:#dbe8ff,stroke-width:2px
+  classDef item fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef good fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef nil fill:#2a0a10,stroke:#ef4444,color:#ffbdbd,stroke-width:2px
+  classDef pend fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+
+  ROOT["One intake call<br/>$1.3024 measured"]:::total --> LLM["Bedrock LLM<br/>$0.8455 · 65%"]:::item
+  ROOT --> TTS["Polly TTS<br/>$0.2129 · 16%"]:::item
+  ROOT --> STT["Transcribe STT<br/>$0.2046 · 16%"]:::item
+  ROOT --> OTH["Other AWS<br/>$0.0394 · 3%"]:::item
+
+  LLM --> HIST["Re-sent history<br/>86% of LLM spend"]:::pend
+  HIST --> P7A["Phase 7a · messages cachePoint<br/>$3.30 to $0.330 per 1M input tokens"]:::good
+  P7A --> SAVE["~$0.40 of the ~$0.50<br/>LLM saving, no fidelity risk"]:::good
+
+  LLM --> P8["Phase 8 · prefix restructure<br/>ranked as the second lever"]:::pend
+  P8 --> NONE["Measured to ZERO<br/>cache writes cancel the prefix<br/>at 3+ state transitions"]:::nil
+
+  STT --> UNT["Untouched by the plan<br/>27% of the optimized call"]:::pend
+</pre>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">The Priced Stack, Line by Line</div>
+    <p class="rev">Both columns are built from the same measured token and character counts, priced against the billed rate card. <strong>Every line in the right-hand column is attached to a specific named lever</strong> — nothing in it is a round-number aspiration.</p>
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Line</th><th>Baseline</th><th>Optimized</th><th>What moves it</th></tr></thead>
+        <tbody>
+          <tr><td>Bedrock LLM</td><td class="v">$0.8455</td><td class="v"><span class="ok">$0.3467</span></td><td class="v">Phase 7a cachePoint on history; ~12% turn reduction</td></tr>
+          <tr><td>Polly TTS</td><td class="v">$0.2129</td><td class="v"><span class="ok">$0.1691</span></td><td class="v">Fewer synthesized characters once markup stops being spoken</td></tr>
+          <tr><td>Transcribe STT</td><td class="v">$0.2046</td><td class="v"><span class="no">$0.2046</span></td><td class="v"><strong>Nothing.</strong> No lever in the plan touches it</td></tr>
+          <tr><td>Other AWS</td><td class="v">$0.0394</td><td class="v">$0.0394</td><td class="v">—</td></tr>
+          <tr><td><strong>AWS total</strong></td><td class="v"><strong>$1.3024</strong></td><td class="v"><strong>$0.7597</strong></td><td class="v"><strong>&minus;42%</strong> · ~$70,552/yr at 130k calls</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout rev">
+      <p><strong>The line I did not improve is the one worth naming out loud.</strong> Transcribe is $0.2046 before and $0.2046 after, because nothing in the plan touches it — which means it goes from 16% of a $1.30 call to <strong>27% of a $0.76 call, second only to the LLM</strong>. Optimizing a stack changes which line is the problem. A cost report that only lists wins hides the next piece of work.</p>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">What Is Actually Deployed — Resolved Config</div>
+    <p class="rev">Every row read from the config that ships, not from memory. <strong>The base config <em>is</em> prod</strong>; each stage lists only what differs and is deep-merged over it. Two things fall out of this table — the model routing, and the reason the P0 stayed invisible.</p>
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Agent</th><th>TTS in prod</th><th>Model</th><th>Why that pairing</th></tr></thead>
+        <tbody>
+          <tr><td>Intake — the precert call</td><td class="v"><strong>AWS Polly</strong> · <code>Ruth</code> · generative · 16 kHz</td><td class="v">Sonnet 4.5</td><td class="v">Carries clinical capture. <strong>Not</strong> a place to trade accuracy for token price</td></tr>
+          <tr><td>Concierge — benefits Q&amp;A</td><td class="v">ElevenLabs <code>eleven_turbo_v2_5</code></td><td class="v">Sonnet 4.5</td><td class="v">Higher-fidelity voice; 3.5s endpointing vs intake's 2.5s</td></tr>
+          <tr><td>Ticket summary — offline</td><td class="v">—</td><td class="v"><span class="ok">Opus 4.5</span></td><td class="v">One call per ticket, off the hot path — worth the rate</td></tr>
+          <tr><td>QA caller — the test harness</td><td class="v">AWS Polly · <code>Stephen</code></td><td class="v"><span class="ok">Haiku 4.5</span></td><td class="v">Drives scripted scenarios. Cheapest model, zero caller risk</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout rev">
+      <p><strong>Model routing already exists — which is precisely why I rejected more of it.</strong> Haiku drives the QA harness and Opus writes ticket summaries, because both sit off the live call. Phase 9 proposed routing <em>in-call</em> turns to a smaller model; after Phase 7a the input lines are already cheap, so it earns little and spends accuracy on a clinical intake. The lever was never "use a cheaper model" — it is <strong>"know which calls a cheaper model is allowed to touch."</strong></p>
+    </div>
+    <div class="callout rev">
+      <p><strong>And the stage divergence is the whole reason the P0 survived.</strong> Intake resolves to <code>provider: "aws"</code> in prod and preprod and <code>"elevenlabs"</code> in beta — with <code>ssml_enabled: true</code> in all three. Beta is the one stage where that pairing renders correctly, and beta is where people test. Every LLM call also runs on the <strong><code>us.</code> inference profile</strong>, which is why moving to <code>global.</code> for a cheaper rate is a <em>PHI data-residency</em> decision rather than an engineering one.</p>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">The Defect the Cost Work Found</div>
+    <div class="cards c2 rev">
+      <div class="card coral">
+        <div class="k">P0 · caller-facing <span class="lyr tts" style="margin-left:6px">TTS</span> <span class="lyr code">config</span></div>
+        <h3>Polly was reading the markup out loud</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">46.93s</span><span class="ml">Synthesis with markup spoken as words</span></div>
+          <div class="m"><span class="mv">10.15s</span><span class="ml">Same utterance, <code>TextType=ssml</code></span></div>
+          <div class="m"><span class="mv">5</span><span class="ml">Words Polly emits for one <code>&lt;break/&gt;</code> tag</span></div>
+          <div class="m"><span class="mv sm">1 branch</span><span class="ml">Wired for ElevenLabs, not for Polly</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>The normalizer emits <code>&lt;break time="250ms"/&gt;</code> between digits so a member ID is intelligible. <code>aws.TTS()</code> was constructed with <strong>no <code>text_type</code></strong>, so Polly defaulted to <code>text</code> and <strong>vocalized the tag</strong>: "break time equals 250 milliseconds."</li>
+            <li>The <strong>same function's ElevenLabs branch already threaded the flag.</strong> One provider branch inside a single <code>if/else</code> was wired and the other was not — so the fix is a <strong>parity change, not a feature</strong>.</li>
+            <li>Ship the <code>&lt;speak&gt;</code> wrapper and the config flag in <strong>one commit</strong>, because reverting the flag alone lands on a worse cell.</li>
+          </ul>
+        </div>
+        <p><strong>It could not happen where anyone tested.</strong> Beta runs ElevenLabs; preprod and prod run Polly. The defect lived exclusively in the environments developers never dial into — which is why a cost investigation, not a bug report, is what surfaced it.</p>
+      </div>
+      <div class="card warn">
+        <div class="k">Cross-finding · the fix fed the bill</div>
+        <h3>The markup was re-entering the model's context</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv amb">~10</span><span class="ml">Tokens of markup per digit spoken back</span></div>
+          <div class="m"><span class="mv">2</span><span class="ml">Call sites that write to <code>chat_ctx</code></span></div>
+          <div class="m"><span class="mv sm">every turn</span><span class="ml">Context re-sent to Bedrock thereafter</span></div>
+          <div class="m"><span class="mv sm">1 argument</span><span class="ml">Two uses of one string — that was the bug</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li><code>say()</code> normalized the text <em>first</em>, then passed the <strong>normalized</strong> string to both synthesis and <code>add_to_chat_ctx</code>. So the <code>&lt;break/&gt;</code> tags entered conversation history, were re-sent to Bedrock on every subsequent turn, and were persisted into the conversation log.</li>
+            <li><strong>Fix: pass un-normalized text to the context and normalized text only to the synthesizer.</strong> The two arguments should never have been the same string.</li>
+            <li>Land it <strong>before</strong> capturing any replay baseline — a baseline recorded while the defect is live encodes the defect as the expected output.</li>
+          </ul>
+        </div>
+        <p>This is the finding I care about most: <strong>enabling the speech fix would have inflated the exact tokens the cost work exists to reduce</strong>, and it also changes the bytes a record-fidelity baseline is defined over. Correctness, cost and verifiability turned out to be one defect, and none of the three original write-ups named it.</p>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">The Lever That Measured to Zero</div>
+    <p class="rev">Three scenarios, priced from the same measured token counts. The conservative column is the one that changed my mind — it gives the second-largest lever <strong>nothing</strong>.</p>
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Scenario</th><th>History</th><th>Prefix</th><th>Summary</th><th>Output</th><th>Total</th><th>vs today</th></tr></thead>
+        <tbody>
+          <tr><td>Conservative</td><td class="v">$0.1161</td><td class="v">$0.2218</td><td class="v">$0.0190</td><td class="v">$0.0417</td><td class="v"><strong>$0.3987</strong></td><td class="v">&minus;53%</td></tr>
+          <tr><td><strong>Realistic</strong> — what I publish</td><td class="v">$0.0818</td><td class="v">$0.2041</td><td class="v">$0.0190</td><td class="v">$0.0417</td><td class="v"><strong>$0.3467</strong></td><td class="v"><span class="ok">&minus;59%</span></td></tr>
+          <tr><td>Optimistic</td><td class="v">$0.0704</td><td class="v">$0.1371</td><td class="v">$0.0060</td><td class="v">$0.0403</td><td class="v"><strong>$0.2538</strong></td><td class="v">&minus;70%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li><strong>Phase 7a does nearly all the work.</strong> Repricing 144,091 history tokens from $3.30 to $0.330 per 1M input tokens — the 0.1&times; cache-read rate — takes that line from $0.4755 to ~$0.05, plus ~$0.02&ndash;0.07 of new cache writes — <strong>~$0.40 of the ~$0.50 total saving, and it carries no record-fidelity risk.</strong></li>
+        <li><strong>Phase 8 I largely wrote off.</strong> At 3+ state transitions per call the cache <em>writes</em> cancel the smaller prefix — the conservative column gives it <strong>zero</strong>. That is the review's own finding applied honestly rather than modelled optimistically.</li>
+        <li><strong>Phase 9 — routing cheap turns to a smaller model — is excluded entirely.</strong> After 7a the input lines are already cheap, so it earns little and costs accuracy risk on a clinical intake call. Cheapest lever, worst trade.</li>
+        <li>The <code>global.</code> inference profile reaches <strong>$0.315/call</strong> — but that is a <strong>compliance decision about PHI data residency, not a scheduling decision</strong>, so it does not belong in an engineering plan's savings column.</li>
+      </ul>
+    </div>
+
+    <div class="callout rev">
+      <p><strong>Ranking levers by modelled saving is how you end up building the wrong one.</strong> Phase 8 looked like the second-biggest win right up until the cache-write term was carried through the arithmetic instead of assumed away. Phase 7a won not because it was the largest number but because it was the largest number <em>that survived its own caveats</em> — and it happened to be the one change with no record-fidelity risk attached.</p>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">What the Red Team Refuted — Including Mine</div>
+    <p class="rev">I ran a five-lens adversarial review against my own investigation before it went anywhere near the client. Verdict: <strong>REQUEST CHANGES</strong>. Ten core claims: four proven, two unproven, <strong>four refuted</strong>.</p>
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Claim I made</th><th>Verdict</th><th>What was actually true</th></tr></thead>
+        <tbody>
+          <tr><td>Polly speaks <code>&lt;break/&gt;</code> markup aloud under <code>TextType=text</code></td><td class="v"><span class="ok">PROVEN</span></td><td class="v">Speech marks return five discrete word entries; independently replayed</td></tr>
+          <tr><td>The generative engine honors <code>&lt;break/&gt;</code> under <code>TextType=ssml</code></td><td class="v"><span class="ok">PROVEN</span></td><td class="v">Duration delta 1.06s → 2.62s; +47,276 bytes = +1.4774s on a wrapped chunk</td></tr>
+          <tr><td>"<strong>+90% call duration</strong> on every identifier readback"</td><td class="v"><span class="no">REFUTED</span></td><td class="v">Measured on a path production does not execute. Whole-sentence: 3 tags. Streamed: <strong>0</strong>. Survives as <strong>+3.97s per utterance</strong>, and the production rate is <em>unproven</em></td></tr>
+          <tr><td>Two-word answers are "structurally incapable" of interrupting</td><td class="v"><span class="no">REFUTED</span></td><td class="v">Not incapable — <strong>deferred</strong> until the accumulated transcript reaches five words. Which is exactly why callers repeat three times</td></tr>
+          <tr><td>A Polly lexicon "cannot be defeated" by tokenization</td><td class="v"><span class="no">REFUTED</span></td><td class="v">The installed plugin never sends <code>LexiconNames</code> <em>at all</em>, and the normalizer rewrites <code>ID</code> → <code>I D</code> before Polly sees it — the grapheme can never match</td></tr>
+          <tr><td>Six named tickets were caused by these defects</td><td class="v"><span class="no">REFUTED</span></td><td class="v">Contradicted by fixes already shipped in <code>HEAD</code>. One ticket's question had been <strong>deleted</strong>, not broken — a vocabulary cannot improve a question never asked</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cards c2 rev">
+      <div class="card coral">
+        <div class="k">Critical · caught by mechanical sweep</div>
+        <h3>The fix would have silenced the test harness</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">4 → 3</span><span class="ml">Call sites actually in scope</span></div>
+          <div class="m"><span class="mv sm">grep green</span><span class="ml">The acceptance oracle would have passed</span></div>
+          <div class="m"><span class="mv sm">silence</span><span class="ml">Outcome at the fourth site</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>The plan said "apply <code>text_type="ssml"</code> to <strong>all four</strong> <code>aws.TTS</code> sites," and the acceptance criterion was a <strong>grep</strong> proving all four had it.</li>
+            <li>The fourth site is the <strong>QA caller — the harness that phones the agent to test it.</strong> It has no normalizer, so it emits no markup; declaring plain text as SSML makes Polly reject every request. It goes <strong>mute</strong>.</li>
+            <li>Correct precondition is <em>"does this site sit behind the normalizer?"</em> — <strong>never</strong> <em>"is this site in the grep output?"</em> The exclusion is now enforced by a test, not a comment.</li>
+          </ul>
+        </div>
+        <p><strong>The acceptance criterion did not merely permit the defect — it mandated it, and the oracle would have reported success.</strong> And the thing being broken was the regression suite that would have caught it. Found by cross-referencing every call site against whether its module reaches the normalizer; <em>not</em> by re-reading the plan, which had already confirmed the error twice.</p>
+      </div>
+      <div class="card warn">
+        <div class="k">Discipline · what makes the ledger honest</div>
+        <h3>The suite encoded the bug as the specification</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv amb">~20</span><span class="ml">Tests asserting the markup was correct output</span></div>
+          <div class="m"><span class="mv bad">0</span><span class="ml">Tests touching <code>text_type</code> — the boundary the defect lives on</span></div>
+          <div class="m"><span class="mv">95 / 59</span><span class="ml">Pre-existing pytest failures / ruff errors on the merge base</span></div>
+          <div class="m"><span class="mv bad">18 vs 2</span><span class="ml">Same module, full suite vs isolated — leaked global state</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Roughly twenty tests asserted <code>&lt;break/&gt;</code> tags were the <em>expected</em> output and <strong>passed happily under the live defect</strong>. Zero tests covered the boundary where the defect actually lived.</li>
+            <li>The baseline was already red, so <strong>"green" had to be redefined as a differential</strong>: the failing <em>set</em> at this commit must be a subset of the set at the merge base, under an identical invocation. <strong>Set, not count</strong> — counts hide disjoint membership changes.</li>
+            <li>A module-scoped run <strong>under-reports by 16</strong> because of leaked module-singleton state, so it is not valid acceptance evidence. Reset fixture first; every criterion cites a full-suite run.</li>
+          </ul>
+        </div>
+        <p>The written record said <strong>12</strong> failures. The measured value was <strong>18</strong>. Capturing a baseline from prose rather than from a run would have seeded the oracle with a wrong expected set and passed while six failures went unaccounted for.</p>
+      </div>
+    </div>
+
+    <div class="cards c2 rev">
+      <div class="card warn">
+        <div class="k">Capacity model · found by multiplying out</div>
+        <h3>The per-turn transcript sync listens for an event that no longer fires</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv amb">~86</span><span class="ml">Backend + S3 writes per call the design intended</span></div>
+          <div class="m"><span class="mv bad">0</span><span class="ml">That fire mid-call — <code>agent_speech_committed</code> is absent from livekit-agents 1.x events</span></div>
+          <div class="m"><span class="mv">~12</span><span class="ml">Backend requests per call actually made — handoffs and call end only</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Sizing <strong>30k calls/quarter</strong> meant counting requests per call from code, not assuming them. The debounced sync in <code>assistant_agent.py</code> subscribes to a 0.x event name; the installed 1.3 SDK's <code>EventTypes</code> literal doesn't contain it.</li>
+            <li>Consequence runs both ways: backend load is <strong>~17× lower</strong> than designed (~4k vs ~70k requests/day), and a <strong>mid-call crash loses the transcript</strong> the backend was meant to hold.</li>
+            <li>Fix direction: subscribe to <code>conversation_item_added</code>, keep the 5 s debounce, and upload a <strong>delta</strong> rather than the full context — full re-upload grows quadratically with call length.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout rev">
+      <p><strong>The caveats travel with the number — that is what makes it usable.</strong> One term in the target column is <em>estimated</em> rather than measured: the cache write. The usage logger has no <code>cacheWriteInputTokens</code> field, so today's telemetry <strong>structurally cannot capture it</strong> — which is exactly why "instrument the cache write" is a named work item in the plan instead of an assumption buried in a spreadsheet. I publish the <strong>realistic</strong> column, never the optimistic one, and I name the single input I can't yet close. A cost model that tells you which of its own inputs is weakest is one you can act on. One that doesn't is a slide.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COEs -->
+<section id="coe">
+  <div class="wrap">
+    <div class="seclabel rev">Production Incidents</div>
+    <h2 class="rev">Two Correction-of-Error Reports</h2>
+    <p class="sub rev">Both written to the same template: evidence first, then a 5-Whys chain until it stops being a code bug and starts being a design decision, then fixes with named owners and priorities, then lessons that generalize. Details below are de-identified — no member data, group names, ticket numbers or client phone numbers.</p>
+
+    <div class="mstrip rev" style="margin-bottom:26px">
+      <div class="m"><span class="mv bad">57,549</span><span class="ml">Rows returned by an ignored filter</span></div>
+      <div class="m"><span class="mv bad">~956K</span><span class="ml">Rows scanned per unscoped query</span></div>
+      <div class="m"><span class="mv bad">~6s</span><span class="ml">Latency added to every call</span></div>
+      <div class="m"><span class="mv bad">502</span><span class="ml">The transient error that lost the data</span></div>
+      <div class="m"><span class="mv bad">0</span><span class="ml">Retries on that lookup</span></div>
+      <div class="m"><span class="mv">7</span><span class="ml">Whys to reach the design decision</span></div>
+      <div class="m"><span class="mv">6</span><span class="ml">Fixes, P0 through P2</span></div>
+    </div>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>COE #1 · EDI 278 quarantined — subscriber DOB empty</span><span class="tag bad">severity: medium · 3 contributing factors</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart TB
+  classDef ok fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef bad fill:#2a0a10,stroke:#ef4444,color:#ffbdbd,stroke-width:2px
+  classDef warn fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+
+  A["Provider calls the intake line"]:::ok --> B["Ticket created"]:::ok
+  B --> C["Patient verified — dependent<br/>on a shared family ID"]:::ok
+  C --> D["Agent looks up the subscriber<br/>to fill the insured's demographics"]:::ok
+  D --> E["Backend returns 502<br/>Bad Gateway"]:::bad
+  E --> F["No retry logic —<br/>single attempt, silent degradation"]:::bad
+  F --> G["Subscriber fields left empty<br/>verification still marked complete"]:::warn
+  G --> H["Intake record uploaded to S3"]:::ok
+  H --> I["Pipeline validator rejects<br/>empty subscriber DOB"]:::bad
+  I --> J["278 QUARANTINED<br/>precert never filed"]:::bad
+</pre>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:36px">The 5-Whys — Where It Stopped Being a Bug</div>
+    <div class="whys rev">
+      <div class="why">The 278 was quarantined because the subscriber's date of birth was an empty string, failing the pipeline's validator.</div>
+      <div class="why">The agent uploaded empty subscriber fields because the subscriber lookup failed to find the primary policyholder.</div>
+      <div class="why">The lookup hit a support-search endpoint that returned <strong>502 Bad Gateway</strong>.</div>
+      <div class="why">That endpoint uses a <code>contains</code> match across the full unscoped member table — a <code>LIKE '%…%'</code> query over ~956K rows — so it timed out.</div>
+      <div class="why">The <code>contains</code> approach was <strong>inherited from the admin search UI pattern</strong>. For this lookup the ID is already canonical, so an exact match would return instantly.</div>
+      <div class="why hit">There is no exact-match endpoint for this ID, because the filter set <strong>does not declare the field</strong> — and the query parameter is therefore <strong>silently ignored</strong>, returning all org-scoped members regardless of the filter value.</div>
+      <div class="why hit">The agent has <strong>no retry logic</strong> for this lookup. A single transient 502 permanently loses the data, and the "graceful degradation" assumes the caller can supply subscriber info — but on intake calls, providers are never asked for the insured's demographics.</div>
+    </div>
+
+    <div class="callout rev bad">
+      <p><strong>The finding that made this worth writing up.</strong> Chasing why 6 to 8 expected results came back as tens of thousands, we found the filter had <em>never</em> been applied. Every call logged the same result count regardless of the value searched for:</p>
+      <div class="cb" style="margin-top:14px"><div class="cbh">the same number, every call, every value</div><pre>Searching members: external_id=<span class="g">'…0012'</span> → <span class="r">57549 results</span>
+Searching members: external_id=<span class="g">'…001'</span>  → <span class="r">57549 results</span>
+Searching members: external_id=<span class="g">'…00'</span>   → <span class="r">57549 results</span>
+Progressive trim exhausted → falls through to DOB + name → succeeds</pre></div>
+      <p style="margin-top:14px">Verification had only ever worked because a <em>different</em> tier — name + DOB, on a different endpoint that filters correctly — was silently carrying every call. <strong>The member-ID verification path had never functioned since launch.</strong> It looked healthy because the fallback always caught it, while adding roughly 6 seconds of latency to every single call. The P0 fix wasn't an optimization; it restored a path that had never worked.</p>
+    </div>
+
+    <div class="cards c2 rev" style="margin-top:24px">
+      <div class="card coral">
+        <div class="k">Second problem, same ticket <span class="lyr data" style="margin-left:6px">data</span></div>
+        <h3>The toll-free number that matched a member</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv bad">2</span><span class="ml">Members attached — one wrong</span></div>
+          <div class="m"><span class="mv bad">30+</span><span class="ml">System numbers exposed to this</span></div>
+          <div class="m"><span class="mv bad">every</span><span class="ml">Call from that line matched him</span></div>
+          <div class="m"><span class="mv">0</span><span class="ml">Validations against system numbers</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Disable phone-based member auto-association <strong>on intake calls</strong> — providers always dial a shared TPA number that is never a member's phone.</li>
+            <li>Add a census data-quality rule flagging any member phone field that matches a <strong>known system number</strong>.</li>
+          </ul>
+        </div>
+        <p>The backend auto-searches for members whose phone matches the inbound call number. For intake, that inbound number is <strong>the TPA's own toll-free line</strong> — and a census file had it sitting in an unrelated member's personal phone field.</p>
+        <div class="tie bad"><b>The generalizable failure</b>Phone-based auto-association was designed for the <strong>concierge</strong> agent, where members call from their own phones. The <strong>intake</strong> agent inherited it, where providers always call through a shared TPA number that is never a member's phone. A behavior correct for one agent type was silently wrong for another.</div>
+      </div>
+      <div class="card accent">
+        <div class="k">Fixes shipped</div>
+        <h3>Six, by priority</h3>
+        <ul class="lst num" style="margin-top:10px">
+          <li><strong>P0 · Backend</strong> — declare exact and prefix filters on the ID field. Two lookup modes: exact for canonical lookups, prefix to replace the 3-call progressive-trim loop with one query.</li>
+          <li><strong>P1 · Agent</strong> — use the new exact filter for subscriber lookup, <strong>with retry</strong>.</li>
+          <li><strong>P1 · Pipeline</strong> — enrich subscriber demographics <em>before</em> validation, as defense in depth.</li>
+          <li><strong>P1</strong> — remediate the quarantined record and re-trigger generation.</li>
+          <li><strong>P2 · Agent</strong> — disable phone-based member auto-association on intake calls.</li>
+          <li><strong>P2 · Data quality</strong> — flag census rows whose member phone matches a known system number.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:40px">Lessons — the transferable ones</div>
+    <div class="cards c3 rev">
+      <div class="card warn"><div class="k">Lesson 1</div><h3>Silently ignored filters are worse than errors</h3><p>The query builder drops unknown parameters without warning. The endpoint <strong>appeared to work</strong> — 200, results returned — while filtering nothing. Declaring filters explicitly, or switching to strict mode, surfaces this instantly.</p></div>
+      <div class="card warn"><div class="k">Lesson 2</div><h3>No retry on a fire-and-forget lookup is permanent data loss</h3><p>One attempt, silent degradation on failure. The "the caller will provide it" assumption was <strong>false for this call type</strong> — and nobody re-checked the assumption when the code was reused.</p></div>
+      <div class="card warn"><div class="k">Lesson 3</div><h3>Behavior designed for one agent type leaks into others</h3><p>Auto-association made sense for concierge calls and was actively harmful on intake calls. Shared backends need <strong>agent-type awareness</strong> at the entry point, not just shared endpoints.</p></div>
+      <div class="card warn"><div class="k">Lesson 4</div><h3>Schema mismatches between services create quarantine traps</h3><p>The agent <em>allows</em> an empty subscriber DOB — deliberately, "unknown is better than wrong". The pipeline <em>rejects</em> it. Both are defensible in isolation; together they make a trap that only fires in production.</p></div>
+      <div class="card warn"><div class="k">Lesson 5</div><h3>A broken path can hide behind a working fallback</h3><p>Tier 0 failed on every call for months. Nobody noticed because Tier 2 always caught it — at ~6 seconds of added latency per call. <strong>Fallbacks need their own alarm.</strong></p></div>
+      <div class="card warn"><div class="k">Lesson 6</div><h3>Correct-looking data can be wrong data</h3><p>The census was structurally valid. A member's phone field just happened to contain a system number. Validation checked <em>shape</em>, not <em>plausibility</em> — hence the new data-quality rule.</p></div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:48px">COE #2 · HIPAA Verification — Rebuilt to a 3-Factor Rule</div>
+    <p class="sub rev" style="margin-bottom:18px">The second report is the other half of the story: after the verification tiers were reworked, a QA suite was run against every path — including the two that are supposed to <em>fail</em> closed.</p>
+
+    <div class="mstrip rev" style="max-width:none;margin-bottom:26px">
+      <div class="m"><span class="mv">10/10</span><span class="ml">Scenarios passing (100%)</span></div>
+      <div class="m"><span class="mv">3</span><span class="ml">Factors required, always</span></div>
+      <div class="m"><span class="mv">6</span><span class="ml">Via Path A — name + DOB + member ID</span></div>
+      <div class="m"><span class="mv">3</span><span class="ml">Via Path B — name + DOB + address</span></div>
+      <div class="m"><span class="mv amb">2</span><span class="ml">Correctly refused → escalation</span></div>
+      <div class="m"><span class="mv bad">6</span><span class="ml">Bugs fixed to get there</span></div>
+    </div>
+
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Path</th><th>Factor 1</th><th>Factor 2</th><th>Factor 3</th><th>Outcome</th></tr></thead>
+        <tbody>
+          <tr><td>Path A</td><td class="v">Name</td><td class="v">DOB</td><td class="v">Member ID</td><td><span class="ok">VERIFIED</span></td></tr>
+          <tr><td>Path B</td><td class="v">Name</td><td class="v">DOB</td><td class="v">Address line 1</td><td><span class="ok">VERIFIED</span></td></tr>
+          <tr><td>Escalation</td><td class="v">—</td><td class="v">—</td><td class="v">—</td><td><span class="no">UNVERIFIED → transfer to a human</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sub rev" style="margin-top:16px;margin-bottom:24px">Exactly <strong>three matching data points</strong>, always. Address line 1 becomes required whenever the member ID doesn't match — whether because it's <em>wrong</em> or because it was <em>never provided</em>. That single sentence closed a class of bug where a 2-factor match was quietly accepted.</p>
+
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Bug</th><th>Root cause</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>DOB-found members rejected on ID mismatch</td><td class="v">Hard-rejected when the caller's ID didn't match the found member</td><td class="v">Skip the ID check when tier 0 failed; fall through to Path B</td></tr>
+          <tr><td>Address API returning 400</td><td class="v">Called without city / state / zip</td><td class="v">Pass all three as parameters</td></tr>
+          <tr><td>State name rejected by the API</td><td class="v">API requires the 2-character abbreviation</td><td class="v">Added a state-name normalization lookup</td></tr>
+          <tr><td>Disenrolled members passing verification</td><td class="v">The DOB search path didn't filter on enrollment status</td><td class="v">Post-verification check clears the match if disenrolled</td></tr>
+          <tr><td>Verification passing on only 2 factors</td><td class="v">The ID check was skipped entirely when the ID was <code>None</code></td><td class="v">Require address line 1 whenever the ID doesn't match</td></tr>
+          <tr><td>QA caller rejecting phonetic readback</td><td class="v">Different phonetic words treated as wrong characters</td><td class="v">Compare the <strong>letters</strong>, not the phonetic words</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cards c2 rev" style="margin-top:24px">
+      <div class="card accent">
+        <div class="k">The two scenarios that must fail</div>
+        <h3>Failing closed is the feature</h3>
+        <p><strong>Disenrolled member</strong> — correct ID, correct name, correct DOB, but no longer enrolled. Result: <strong>not verified</strong>, agent says they appear to no longer be actively enrolled and transfers to a representative, and <strong>no clinical data is collected</strong>.</p>
+        <p><strong>Three failed attempts</strong> — fictitious member data. After 3 failures the HIPAA gate blocks <em>all</em> data-collection tools, the call escalates, and again <strong>no clinical data is collected</strong>.</p>
+        <div class="tie"><b>Why these are the important tests</b>Any suite can assert that the happy path works. These two assert the system <strong>refuses to do the wrong thing</strong> — which is the only property a compliance gate actually has.</div>
+      </div>
+      <div class="card accent">
+        <div class="k">The subtle one</div>
+        <h3>The test harness had the bug</h3>
+        <p>A QA caller agent drives these scenarios by phone. It was <strong>failing valid calls</strong> because the agent read back <em>"C as in Charlie"</em> where the scenario expected a different phonetic word for the same letter — and the harness compared the phonetic words rather than the letters they encode.</p>
+        <div class="tie bad"><b>Worth stating plainly</b>A test that fails for the wrong reason is worse than no test — it trains the team to ignore red. The fix was to compare what the readback <em>means</em>, not how it was <em>spoken</em>.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process">
+  <div class="wrap">
+    <div class="seclabel rev">How We Found Them</div>
+    <h2 class="rev">The Debugging Process</h2>
+    <p class="sub rev">Voice agents defeat normal debugging in a specific way: the highest-value evidence is <strong>audio</strong>, which is not greppable, not diffable, and not in your logs. The process below is built around that constraint.</p>
+
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">2</span><span class="ml">Artifacts captured per call</span></div>
+      <div class="m"><span class="mv">4 → 1</span><span class="ml">Candidate layers, after one question</span></div>
+      <div class="m"><span class="mv">6</span><span class="ml">Steps, same order every time</span></div>
+      <div class="m"><span class="mv">1</span><span class="ml">Ticket pinned to every QA scenario</span></div>
+      <div class="m"><span class="mv sm">audio-only</span><span class="ml">Defect class no text artifact can reveal</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li><strong>Route before reading.</strong> Answer "is the value in the transcript, and on which side?" first — it collapses four candidate layers to one in seconds.</li>
+        <li>Budget for <strong>scheduled human listening</strong>, not just logging; some defects exist only in rendered audio.</li>
+        <li>Reproduce <strong>by phone</strong>, not by unit test — a scripted caller agent turns each fixed bug into a permanent scenario.</li>
+        <li>Push the 5-Whys until the answer is a <strong>design decision</strong>, then write the lesson at that level.</li>
+      </ul>
+    </div>
+
+    <div class="cards c3 rev">
+      <div class="card accent"><div class="k">Step 1 · Capture both artifacts</div><h3>Transcript ≠ audio</h3><p>Every call stores the full <strong>transcript</strong> — both sides, the caller's words and the agent's own — plus the <strong>recording</strong>. The transcript is what got written down; the recording is what got rendered. They disagree more often than you would expect, and that disagreement is the diagnosis.</p></div>
+      <div class="card accent"><div class="k">Step 2 · Route before reading</div><h3>Answer the attribution question first</h3><p>"Is the correct value in the transcript, and on which side?" is answerable in seconds, and it eliminates three of the four candidate layers immediately. Skipping this step is what produced months of prompt-tuning for code bugs.</p></div>
+      <div class="card accent"><div class="k">Step 3 · Listen</div><h3>A listening loop, not a logging loop</h3><p>The hyphen-as-"two" bug is invisible in every text artifact — both sides of the pipeline agree the character is a hyphen. It exists only in rendered audio. Some percentage of call recordings has to be <strong>heard by a person</strong>, on a schedule, or this class of defect is undetectable.</p></div>
+      <div class="card accent"><div class="k">Step 4 · Reproduce by phone</div><h3>A QA caller agent, scenarios as YAML</h3><p>Regressions are reproduced by an automated caller that dials the agent and plays a scripted scenario — declared in YAML with given / when / then. Each scenario carries the ticket it came from, so a fixed bug becomes a permanent test.</p></div>
+      <div class="card accent"><div class="k">Step 5 · Fix at the right layer</div><h3>Prompt for intent, code for invariants</h3><p>If the property is compliance or data integrity, it goes in code — a prompt can only ask. If it's phrasing or style, it goes in the prompt, where it's cheap to iterate. Several fixes needed both, and saying which half does what is part of the fix.</p></div>
+      <div class="card accent"><div class="k">Step 6 · Write the COE</div><h3>Whys until it stops being a bug</h3><p>Keep asking why until the answer is a <strong>design decision</strong> rather than a defect — "this was inherited from the admin search pattern", "this was designed for a different agent type". That's where the transferable lesson lives, and it's usually three whys past where it's tempting to stop.</p></div>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">The COE Template</div>
+    <div class="diagram rev">
+      <div class="dhead"><span>correction of error · same structure every time</span><span class="tag">evidence before narrative</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart LR
+  classDef a fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef b fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef c fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+
+  E["Evidence<br/>logs · payloads · timeline"]:::a --> W["5-Whys<br/>until it's a design decision"]:::b
+  W --> F["Fixes<br/>owner + priority each"]:::b
+  F --> A["Action items<br/>tracked, not narrated"]:::c
+  A --> L["Lessons<br/>generalizable only"]:::c
+</pre>
+      </div>
+    </div>
+    <div class="callout rev">
+      <p><strong>Two rules that keep a COE honest.</strong> Evidence comes <em>before</em> the narrative — raw logs and payloads first, so the story has to fit the data rather than the data being selected to fit the story. And every fix carries a <strong>named owner and a priority</strong>; a fix without an owner is a wish. The lessons section only accepts findings that generalize beyond the incident — anything specific to this bug already lives in the fix.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FRAMEWORK -->
+<section id="framework">
+  <div class="wrap">
+    <div class="seclabel rev">Decision Framework</div>
+    <h2 class="rev">Should We Build / Own This?</h2>
+    <p class="sub rev">Every issue above ended in a build-or-don't decision, and the way that decision gets made <strong>changes with company stage</strong>. The seven questions stay the same. The discriminating variable moves — and naming which regime you're in is most of the judgment.</p>
+
+    <div class="mstrip rev">
+      <div class="m"><span class="mv">7</span><span class="ml">Questions — identical in both regimes</span></div>
+      <div class="m"><span class="mv">7</span><span class="ml">Discriminating variables that swap out</span></div>
+      <div class="m"><span class="mv">4</span><span class="ml">Value types that don't convert</span></div>
+      <div class="m"><span class="mv amb">2</span><span class="ml">Of them lose every ROI argument</span></div>
+      <div class="m"><span class="mv">5</span><span class="ml">Triggers that flip you back to rigor</span></div>
+    </div>
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li>Keep <strong>one question set</strong> and swap the discriminating variable by stage, rather than maintaining two frameworks.</li>
+        <li><strong>Name the regime out loud</strong> before answering — that call carries more of the outcome than any individual answer.</li>
+        <li>Score the four value types <strong>separately</strong>; never let survival or proof work enter a shared ROI ranking.</li>
+      </ul>
+    </div>
+
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>#</th><th>Large company</th><th>Startup</th><th>Why it changes</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td class="v"><strong>Boundary</strong> — whose charter?</td><td class="v"><strong>Sequencing</strong> — now or later?</td><td class="v">No other team exists, so the constraint is the calendar, not the org chart. A boundary drawn in <em>org space</em> becomes one drawn in <em>time</em>.</td></tr>
+          <tr><td>2</td><td class="v"><strong>Value</strong> — the enablement chain</td><td class="v"><strong>Counterfactual</strong> — what breaks if we don't?</td><td class="v">A one-hop chain to revenue justifies everything, so it filters nothing. Directional value must become counterfactual.</td></tr>
+          <tr><td>3</td><td class="v"><strong>Cost / TCO</strong> — ownership tax over years</td><td class="v"><strong>Reversibility</strong> — one-way door?</td><td class="v">Ownership cost is <em>probabilistic</em> pre-PMF. Reversibility decides whether you're allowed to discount it.</td></tr>
+          <tr><td>4</td><td class="v">(folded inside cost)</td><td class="v"><strong>Displacement</strong> — what didn't get built</td><td class="v">At five engineers everything is zero-sum. At five hundred it isn't.</td></tr>
+          <tr><td>5</td><td class="v">Build · Buy · Platform · Fund-in-place · Standardize · No</td><td class="v">Buy · Manual · Experiment · Build-minimal · Build-properly · No</td><td class="v">Platform and fund-in-place need an org you don't have. Buy becomes the default and <em>build</em> carries the burden of proof.</td></tr>
+          <tr><td>6</td><td class="v"><strong>Decision</strong> — a durable owner</td><td class="v"><strong>Bet</strong> — with a kill criterion and a review date</td><td class="v">Nothing is durable pre-PMF. An experiment with no kill criterion isn't an experiment — it's a decision in a costume.</td></tr>
+          <tr><td>7</td><td class="v"><strong>Operating model</strong> — SLA, on-call, contract</td><td class="v"><strong>Instrumentation</strong> — the metric that says we were right</td><td class="v">There's no one to write a contract with, so the discipline has to come from measurement instead.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:44px">Value Has Four Types — and They Don't Convert</div>
+    <p class="sub rev" style="margin-bottom:18px">The most common prioritization error is comparing across these as if they were one currency. They aren't, and two of them lose every ROI argument they're entered into.</p>
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>Type</th><th>The question</th><th>At a large company</th><th>At a startup</th><th>From this work</th></tr></thead>
+        <tbody>
+          <tr><td>Direct revenue</td><td class="v">Does this close or keep a customer?</td><td class="v">Contested — needs an enablement argument through several hops</td><td class="v">One hop, immediately legible</td><td class="v">X12 278 / 834 / 837p support — payers require it</td></tr>
+          <tr><td>Survival</td><td class="v">Does <em>not</em> having this kill us?</td><td class="v">A compliance org owns it and funds it separately</td><td class="v">Nobody owns it — so it must be taken off the board first</td><td class="v">The HIPAA gate; failing closed after 3 attempts</td></tr>
+          <tr><td>Learning</td><td class="v">Does this tell us whether Y is worth it?</td><td class="v">Often a dedicated research or platform function</td><td class="v">The highest-leverage move — buy information instead of deciding</td><td class="v">The eval harness; the QA caller agent</td></tr>
+          <tr><td>Proof</td><td class="v">Does this unlock a raise or a logo?</td><td class="v">Rarely the point — the logo already exists</td><td class="v">Frequently the highest-value work in the building</td><td class="v">A defensible North Star that moved traffic 1% → 100%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cards c2 rev" style="margin-top:24px">
+      <div class="card coral">
+        <div class="k">Rule 1</div>
+        <h3>Never let survival work compete on ROI</h3>
+        <p>Compliance and security have <strong>no upside</strong> — they only avoid death. Scored on return they lose every time, and every time they should have won. Take them off the board first, then prioritize what's left.</p>
+        <div class="tie"><b>Applied here</b>The HIPAA gate, the 3-factor rule and the fail-closed escalation were never ranked against feature work. That's why they shipped.</div>
+      </div>
+      <div class="card coral">
+        <div class="k">Rule 2</div>
+        <h3>Proof value is real and gets underweighted</h3>
+        <p>Engineers discount it as "not real work". A credible number is often the sentence that raises the round or closes the logo — which makes it, at a startup, frequently the highest-leverage thing available.</p>
+        <div class="tie"><b>Applied here</b>Publishing the KPI's denominator wasn't a feature. It was the artifact that made the number arguable-with, and that's what moved the traffic ramp.</div>
+      </div>
+    </div>
+
+    <div class="callout rev">
+      <p><strong>The regime switch is the actual skill.</strong> Run large-company process at a startup and you sound bureaucratic — charter analysis for a call three people could make in a hallway. Run startup speed logic at a large company and you sound reckless — "we'll rewrite it later" about a system with three hundred dependent teams. Either failure reads as incompetence from the other side.</p>
+      <p style="margin-top:12px">The triggers that flip you back: a second team could plausibly own it · external consumers with expectations · the first enterprise or compliance contract · the cost of being wrong exceeds the cost of deciding carefully · the thing outlives the person who built it. <strong>And the discount only ever applied to things you can throw away</strong> — anything load-bearing (data model, authz, tenancy, money movement, anything regulated) gets full rigor at any stage.</p>
+    </div>
+  </div>
+</section>
+
+
+</div>
+
+<section id="references">
+  <div class="wrap">
+    <div class="seclabel rev">More Work</div>
+    <h2 class="rev">Related Projects</h2>
+    <div class="refs rev">
+      <a class="ref" href="https://chintamanil.github.io/cybershield/">
+        <div class="t">⬡ CyberShield AI Platform</div>
+        <div class="u">chintamanil.github.io/cybershield</div>
+        <div class="d">Multimodal multi-agent RAG cybersecurity platform with a LangGraph supervisor pattern.</div>
+      </a>
+      <a class="ref" href="https://chintamanil.github.io/">
+        <div class="t">⬡ Oracle Bare Metal Automation</div>
+        <div class="u">chintamanil.github.io</div>
+        <div class="d">Multi-region device validation &amp; job orchestration across 10K+ devices.</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="backlink" href="#top">↑ Back to top</a>
+    <div style="margin-top:8px">
+      <a href="https://www.linkedin.com/in/chintamanil/">linkedin.com/in/chintamanil</a>
+    </div>
+    <div class="fl">BenePower · GenAI Benefits Platform · Architecture, Backend &amp; Voice-Agent Production Issues</div>
+  </div>
+</footer>
+
+<script>
+  if (window.mermaid) mermaid.initialize({
+    startOnLoad:true,
+    theme:'base',
+    securityLevel:'loose',
+    themeVariables:{
+      fontFamily:'IBM Plex Mono, monospace',
+      fontSize:'14px',
+      background:'#0a0e1a',
+      primaryColor:'#0f2340',
+      primaryTextColor:'#e7eef9',
+      primaryBorderColor:'#1e4d8c',
+      secondaryColor:'#1a1040',
+      tertiaryColor:'#100e0a',
+      lineColor:'#3a6ea5',
+      textColor:'#dde7f5',
+      mainBkg:'#0f2340',
+      nodeBorder:'#1e4d8c',
+      clusterBkg:'#0b1322',
+      clusterBorder:'#27456e',
+      titleColor:'#00e5a0',
+      edgeLabelBackground:'#0a0e1a',
+      actorBkg:'#0f2340',
+      actorBorder:'#00e5a0',
+      actorTextColor:'#e7eef9',
+      actorLineColor:'#27456e',
+      signalColor:'#9db1cc',
+      signalTextColor:'#dde7f5',
+      labelBoxBkgColor:'#0f1a30',
+      labelBoxBorderColor:'#27456e',
+      labelTextColor:'#e7eef9',
+      loopTextColor:'#00e5a0',
+      noteBkgColor:'#03200f',
+      noteBorderColor:'#00e5a0',
+      noteTextColor:'#b5ffe8',
+      sequenceNumberColor:'#070b14',
+      attributeBackgroundColorOdd:'#0d1526',
+      attributeBackgroundColorEven:'#0b1120'
+    }
+  });
+
+  // scroll reveal
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}});
+  },{threshold:.12});
+  document.querySelectorAll('.rev').forEach((el,i)=>{
+    el.style.transitionDelay=(Math.min(i%6,5)*0.05)+'s';
+    io.observe(el);
+  });
+</script>
+</body>
+</html>
