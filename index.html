@@ -1271,16 +1271,15 @@ flowchart LR
     <span class="role">Production Issues · Voice Intake Agent</span>
     <h1 class="hero">THE BUGS THAT ONLY<br><span class="g">EXIST ON THE PHONE</span></h1>
     <p class="lede">A voice agent taking precertification intake for <strong>a TPA client</strong> fails in ways no other software does. The transcript says one thing and the audio says another. A caller reads a member ID and four different systems disagree about what they heard. A dash gets pronounced as the digit two, and a CSR writes down the wrong ticket number.</p>
-    <p class="lede">This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how we found it, and the dictionaries and configs that now hold the fixes in place. Plus two production correction-of-error reports, and the debugging process that turned "Sally isn't working" into a ticket with an owner.</p>
+    <p class="lede">This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how we found it, and the dictionaries and configs that now hold the fixes in place.</p>
     <div class="stats">
       <div class="stat"><div class="n">4 layers</div><div class="l">STT · prompt · TTS · code — one symptom, four possible owners</div></div>
       <div class="stat"><div class="n">6 stages</div><div class="l">Ordered TTS normalization transform — order itself caused bugs</div></div>
       <div class="stat"><div class="n">3 dicts</div><div class="l">Alphabet · pronunciation · digit maps, versioned per tenant in config</div></div>
-      <div class="stat"><div class="n sm">57,549 rows</div><div class="l">Returned by a filter that was silently ignored — on every single call</div></div>
       <div class="stat"><div class="n sm">Listening loop</div><div class="l">Some defects are invisible in logs and transcripts. You have to hear them</div></div>
       <div class="stat"><div class="n sm">$1.30 → $0.76</div><div class="l">AWS cost per intake call — priced from billed usage, with a costed path to &minus;42%</div></div>
     </div>
-    <div class="partnav rev"><a href="#attribution">Attribution</a><a href="#stt">STT</a><a href="#tts">TTS</a><a href="#dictionaries">Dictionaries</a><a href="#cost">Cost / Latency</a><a href="#tco">Priced Stack</a><a href="#coe">Production COEs</a><a href="#framework">Build / Own</a></div>
+    <div class="partnav rev"><a href="#attribution">Attribution</a><a href="#stt">STT</a><a href="#tts">TTS</a><a href="#dictionaries">Dictionaries</a><a href="#cost">Cost / Latency</a><a href="#tco">Priced Stack</a><a href="#framework">Build / Own</a></div>
   </div>
 </header>
 <div class="deep">
@@ -2157,155 +2156,6 @@ flowchart LR
           </ul>
         </div>
         <p>The written record said <strong>12</strong> failures. The measured value was <strong>18</strong>. Capturing a baseline from prose rather than from a run would have seeded the oracle with a wrong expected set and passed while six failures went unaccounted for.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- COEs -->
-<section id="coe">
-  <div class="wrap">
-    <div class="seclabel rev">Production Incidents</div>
-    <h2 class="rev">Two Correction-of-Error Reports</h2>
-    <p class="sub rev">Both written to the same template: evidence first, then a 5-Whys chain until it stops being a code bug and starts being a design decision, then fixes with named owners and priorities, then lessons that generalize. Details below are de-identified — no member data, group names, ticket numbers or client phone numbers.</p>
-
-    <div class="mstrip rev" style="margin-bottom:26px">
-      <div class="m"><span class="mv bad">57,549</span><span class="ml">Rows returned by an ignored filter</span></div>
-      <div class="m"><span class="mv bad">~956K</span><span class="ml">Rows scanned per unscoped query</span></div>
-      <div class="m"><span class="mv bad">~6s</span><span class="ml">Latency added to every call</span></div>
-      <div class="m"><span class="mv bad">502</span><span class="ml">The transient error that lost the data</span></div>
-      <div class="m"><span class="mv bad">0</span><span class="ml">Retries on that lookup</span></div>
-      <div class="m"><span class="mv">7</span><span class="ml">Whys to reach the design decision</span></div>
-      <div class="m"><span class="mv">6</span><span class="ml">Fixes, P0 through P2</span></div>
-    </div>
-
-    <div class="diagram rev">
-      <div class="dhead"><span>COE #1 · EDI 278 quarantined — subscriber DOB empty</span><span class="tag bad">severity: medium · 3 contributing factors</span></div>
-      <div class="body">
-<pre class="mermaid">
-flowchart TB
-  classDef ok fill:#0f2340,stroke:#1e4d8c,color:#fff
-  classDef bad fill:#2a0a10,stroke:#ef4444,color:#ffbdbd,stroke-width:2px
-  classDef warn fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
-
-  A["Provider calls the intake line"]:::ok --> B["Ticket created"]:::ok
-  B --> C["Patient verified — dependent<br/>on a shared family ID"]:::ok
-  C --> D["Agent looks up the subscriber<br/>to fill the insured's demographics"]:::ok
-  D --> E["Backend returns 502<br/>Bad Gateway"]:::bad
-  E --> F["No retry logic —<br/>single attempt, silent degradation"]:::bad
-  F --> G["Subscriber fields left empty<br/>verification still marked complete"]:::warn
-  G --> H["Intake record uploaded to S3"]:::ok
-  H --> I["Pipeline validator rejects<br/>empty subscriber DOB"]:::bad
-  I --> J["278 QUARANTINED<br/>precert never filed"]:::bad
-</pre>
-      </div>
-    </div>
-
-    <div class="seclabel rev" style="margin-top:36px">The 5-Whys — Where It Stopped Being a Bug</div>
-    <div class="whys rev">
-      <div class="why">The 278 was quarantined because the subscriber's date of birth was an empty string, failing the pipeline's validator.</div>
-      <div class="why">The agent uploaded empty subscriber fields because the subscriber lookup failed to find the primary policyholder.</div>
-      <div class="why">The lookup hit a support-search endpoint that returned <strong>502 Bad Gateway</strong>.</div>
-      <div class="why">That endpoint uses a <code>contains</code> match across the full unscoped member table — a <code>LIKE '%…%'</code> query over ~956K rows — so it timed out.</div>
-      <div class="why">The <code>contains</code> approach was <strong>inherited from the admin search UI pattern</strong>. For this lookup the ID is already canonical, so an exact match would return instantly.</div>
-      <div class="why hit">There is no exact-match endpoint for this ID, because the filter set <strong>does not declare the field</strong> — and the query parameter is therefore <strong>silently ignored</strong>, returning all org-scoped members regardless of the filter value.</div>
-      <div class="why hit">The agent has <strong>no retry logic</strong> for this lookup. A single transient 502 permanently loses the data, and the "graceful degradation" assumes the caller can supply subscriber info — but on intake calls, providers are never asked for the insured's demographics.</div>
-    </div>
-
-    <div class="callout rev bad">
-      <p><strong>The finding that made this worth writing up.</strong> Chasing why 6 to 8 expected results came back as tens of thousands, we found the filter had <em>never</em> been applied. Every call logged the same result count regardless of the value searched for:</p>
-      <div class="cb" style="margin-top:14px"><div class="cbh">the same number, every call, every value</div><pre>Searching members: external_id=<span class="g">'…0012'</span> → <span class="r">57549 results</span>
-Searching members: external_id=<span class="g">'…001'</span>  → <span class="r">57549 results</span>
-Searching members: external_id=<span class="g">'…00'</span>   → <span class="r">57549 results</span>
-Progressive trim exhausted → falls through to DOB + name → succeeds</pre></div>
-      <p style="margin-top:14px">Verification had only ever worked because a <em>different</em> tier — name + DOB, on a different endpoint that filters correctly — was silently carrying every call. <strong>The member-ID verification path had never functioned since launch.</strong> It looked healthy because the fallback always caught it, while adding roughly 6 seconds of latency to every single call. The P0 fix wasn't an optimization; it restored a path that had never worked.</p>
-    </div>
-
-    <div class="cards c2 rev" style="margin-top:24px">
-      <div class="card coral">
-        <div class="k">Second problem, same ticket <span class="lyr data" style="margin-left:6px">data</span></div>
-        <h3>The toll-free number that matched a member</h3>
-        <div class="mstrip">
-          <div class="m"><span class="mv bad">2</span><span class="ml">Members attached — one wrong</span></div>
-          <div class="m"><span class="mv bad">30+</span><span class="ml">System numbers exposed to this</span></div>
-          <div class="m"><span class="mv bad">every</span><span class="ml">Call from that line matched him</span></div>
-          <div class="m"><span class="mv">0</span><span class="ml">Validations against system numbers</span></div>
-        </div>
-        <div class="appr"><b>Approach</b>
-          <ul>
-            <li>Disable phone-based member auto-association <strong>on intake calls</strong> — providers always dial a shared TPA number that is never a member's phone.</li>
-            <li>Add a census data-quality rule flagging any member phone field that matches a <strong>known system number</strong>.</li>
-          </ul>
-        </div>
-        <p>The backend auto-searches for members whose phone matches the inbound call number. For intake, that inbound number is <strong>the TPA's own toll-free line</strong> — and a census file had it sitting in an unrelated member's personal phone field.</p>
-        <div class="tie bad"><b>The generalizable failure</b>Phone-based auto-association was designed for the <strong>concierge</strong> agent, where members call from their own phones. The <strong>intake</strong> agent inherited it, where providers always call through a shared TPA number that is never a member's phone. A behavior correct for one agent type was silently wrong for another.</div>
-      </div>
-      <div class="card accent">
-        <div class="k">Fixes shipped</div>
-        <h3>Six, by priority</h3>
-        <ul class="lst num" style="margin-top:10px">
-          <li><strong>P0 · Backend</strong> — declare exact and prefix filters on the ID field. Two lookup modes: exact for canonical lookups, prefix to replace the 3-call progressive-trim loop with one query.</li>
-          <li><strong>P1 · Agent</strong> — use the new exact filter for subscriber lookup, <strong>with retry</strong>.</li>
-          <li><strong>P1 · Pipeline</strong> — enrich subscriber demographics <em>before</em> validation, as defense in depth.</li>
-          <li><strong>P1</strong> — remediate the quarantined record and re-trigger generation.</li>
-          <li><strong>P2 · Agent</strong> — disable phone-based member auto-association on intake calls.</li>
-          <li><strong>P2 · Data quality</strong> — flag census rows whose member phone matches a known system number.</li>
-        </ul>
-      </div>
-    </div>
-
-
-    <div class="seclabel rev" style="margin-top:48px">COE #2 · HIPAA Verification — Rebuilt to a 3-Factor Rule</div>
-    <p class="sub rev" style="margin-bottom:18px">The second report is the other half of the story: after the verification tiers were reworked, a QA suite was run against every path — including the two that are supposed to <em>fail</em> closed.</p>
-
-    <div class="mstrip rev" style="max-width:none;margin-bottom:26px">
-      <div class="m"><span class="mv">10/10</span><span class="ml">Scenarios passing (100%)</span></div>
-      <div class="m"><span class="mv">3</span><span class="ml">Factors required, always</span></div>
-      <div class="m"><span class="mv">6</span><span class="ml">Via Path A — name + DOB + member ID</span></div>
-      <div class="m"><span class="mv">3</span><span class="ml">Via Path B — name + DOB + address</span></div>
-      <div class="m"><span class="mv amb">2</span><span class="ml">Correctly refused → escalation</span></div>
-      <div class="m"><span class="mv bad">6</span><span class="ml">Bugs fixed to get there</span></div>
-    </div>
-
-    <div class="tbl rev">
-      <table>
-        <thead><tr><th>Path</th><th>Factor 1</th><th>Factor 2</th><th>Factor 3</th><th>Outcome</th></tr></thead>
-        <tbody>
-          <tr><td>Path A</td><td class="v">Name</td><td class="v">DOB</td><td class="v">Member ID</td><td><span class="ok">VERIFIED</span></td></tr>
-          <tr><td>Path B</td><td class="v">Name</td><td class="v">DOB</td><td class="v">Address line 1</td><td><span class="ok">VERIFIED</span></td></tr>
-          <tr><td>Escalation</td><td class="v">—</td><td class="v">—</td><td class="v">—</td><td><span class="no">UNVERIFIED → transfer to a human</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="sub rev" style="margin-top:16px;margin-bottom:24px">Exactly <strong>three matching data points</strong>, always. Address line 1 becomes required whenever the member ID doesn't match — whether because it's <em>wrong</em> or because it was <em>never provided</em>. That single sentence closed a class of bug where a 2-factor match was quietly accepted.</p>
-
-    <div class="tbl rev">
-      <table>
-        <thead><tr><th>Bug</th><th>Root cause</th><th>Fix</th></tr></thead>
-        <tbody>
-          <tr><td>DOB-found members rejected on ID mismatch</td><td class="v">Hard-rejected when the caller's ID didn't match the found member</td><td class="v">Skip the ID check when tier 0 failed; fall through to Path B</td></tr>
-          <tr><td>Address API returning 400</td><td class="v">Called without city / state / zip</td><td class="v">Pass all three as parameters</td></tr>
-          <tr><td>State name rejected by the API</td><td class="v">API requires the 2-character abbreviation</td><td class="v">Added a state-name normalization lookup</td></tr>
-          <tr><td>Disenrolled members passing verification</td><td class="v">The DOB search path didn't filter on enrollment status</td><td class="v">Post-verification check clears the match if disenrolled</td></tr>
-          <tr><td>Verification passing on only 2 factors</td><td class="v">The ID check was skipped entirely when the ID was <code>None</code></td><td class="v">Require address line 1 whenever the ID doesn't match</td></tr>
-          <tr><td>QA caller rejecting phonetic readback</td><td class="v">Different phonetic words treated as wrong characters</td><td class="v">Compare the <strong>letters</strong>, not the phonetic words</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="cards c2 rev" style="margin-top:24px">
-      <div class="card accent">
-        <div class="k">The two scenarios that must fail</div>
-        <h3>Failing closed is the feature</h3>
-        <p><strong>Disenrolled member</strong> — correct ID, correct name, correct DOB, but no longer enrolled. Result: <strong>not verified</strong>, agent says they appear to no longer be actively enrolled and transfers to a representative, and <strong>no clinical data is collected</strong>.</p>
-        <p><strong>Three failed attempts</strong> — fictitious member data. After 3 failures the HIPAA gate blocks <em>all</em> data-collection tools, the call escalates, and again <strong>no clinical data is collected</strong>.</p>
-        <div class="tie"><b>Why these are the important tests</b>Any suite can assert that the happy path works. These two assert the system <strong>refuses to do the wrong thing</strong> — which is the only property a compliance gate actually has.</div>
-      </div>
-      <div class="card accent">
-        <div class="k">The subtle one</div>
-        <h3>The test harness had the bug</h3>
-        <p>A QA caller agent drives these scenarios by phone. It was <strong>failing valid calls</strong> because the agent read back <em>"C as in Charlie"</em> where the scenario expected a different phonetic word for the same letter — and the harness compared the phonetic words rather than the letters they encode.</p>
-        <div class="tie bad"><b>Worth stating plainly</b>A test that fails for the wrong reason is worse than no test — it trains the team to ignore red. The fix was to compare what the readback <em>means</em>, not how it was <em>spoken</em>.</div>
       </div>
     </div>
   </div>
