@@ -1734,11 +1734,6 @@ back caller-provided VALUES.</span></pre></div>
         <div class="tie"><b>Why the trailing phrase</b>The last token of an utterance is the most likely to be cut by a streaming synthesizer. Requiring filler — <em>"…, is that correct?"</em> — is a <strong>TTS workaround implemented in the prompt layer</strong>, which is exactly the kind of cross-layer fix the attribution tree exists to make legible.</div>
       </div>
     </div>
-
-    <div class="callout rev bad">
-      <p><strong>The one where the prompt was never going to work.</strong> The agent kept saying an internal word — "taxonomy" — to callers. Telling the model "NEVER say taxonomy" did nothing, because the word was re-entering through a <strong>tool error message</strong>: a required parameter failed Pydantic validation, and the validation error containing the word was returned into the model's context, which then asked the caller for it.</p>
-      <p style="margin-top:12px">It took four layers to actually remove: make the field optional, rename the parameter, delete the word from the prompt entirely (<em>even a prohibition teaches the token</em>), and add a pronunciation-map entry as a last-resort net. <strong>When a model keeps saying something you've forbidden, grep your tool schemas and validation strings.</strong> Prompts don't override the text your own code feeds back into the context.</p>
-    </div>
   </div>
 </section>
 
