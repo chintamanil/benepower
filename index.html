@@ -557,6 +557,49 @@
     .navlinks a{white-space:nowrap;flex:none}
     .diagram,.tbl,.cb{max-width:100%}
   }
+
+/* synced from the three detail pages */
+  .card.amber{border-color:rgba(245,166,35,.45)}
+  .card.amber h3{color:var(--amber)}
+  .lst.lead{gap:14px;max-width:840px;margin-bottom:38px}
+  .lst.lead li{font-size:clamp(14.5px,1.6vw,17px);line-height:1.6}
+  .lst.lead li::before{top:4px}
+  details.deep{margin:20px 0;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+  details.deep>summary{cursor:pointer;padding:13px 18px;font-family:var(--mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);list-style:none}
+  details.deep>summary::-webkit-details-marker{display:none}
+  details.deep>summary::before{content:"+  "}
+  details.deep[open]>summary::before{content:"\2212  "}
+  details.deep>.deepbody{padding:0 18px 18px}
+  details.deep .rev{opacity:1!important;transform:none!important}
+  .deepbtn{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:var(--accent);background:rgba(0,229,160,.06);border:1px solid var(--accent-dim,#0a7a5a);border-radius:30px;padding:5px 13px}
+  .deepbtn:hover{background:rgba(0,229,160,.14)}
+  h4{font-family:var(--sans);font-weight:600;font-size:16px;margin-bottom:10px;color:var(--txt)}
+  .cards.topalign{align-items:start}
+  .stackcol{display:grid;gap:16px;align-content:start}
+  .mstrip .mv.wrap{font-size:15px;letter-spacing:0;line-height:1.22;overflow-wrap:normal;word-break:normal;white-space:nowrap}
+  .mstrip.wide{grid-template-columns:repeat(2,1fr)}
+  .mstrip.wide .mv{text-align:center}
+  .status.spec{color:#8fb4ff;background:rgba(76,140,255,.10);border:1px solid rgba(76,140,255,.4)}
+  .rowsplit{display:flex;align-items:center;gap:14px;margin:16px 0;padding:0 20px;min-width:480px}
+  .rowsplit::before,.rowsplit::after{content:"";flex:1;height:1px;background:var(--line)}
+  .rowsplit span{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);white-space:nowrap}
+  .tie .lst{margin-top:8px;margin-bottom:9px;gap:7px}
+  .tie .lst li{font-size:13px;padding-left:20px;line-height:1.5}
+  .tie .lst li::before{font-size:11px}
+  .tie a{color:var(--accent);text-decoration:none;border-bottom:1px dotted var(--accent-dim)}
+  .tie a:hover{border-bottom-style:solid}
+  .src.det{color:#8fb4ff;background:rgba(76,140,255,.10);border:1px solid rgba(76,140,255,.4)}
+  .src.llm{color:var(--accent);background:rgba(0,229,160,.09);border:1px solid var(--accent-dim)}
+  .src.meas{color:var(--muted);background:rgba(130,149,178,.08);border:1px solid var(--line2)}
+  .src.v2{color:var(--amber);background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.4)}
+  .prog{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:22px 24px;margin:8px 0 26px}
+  .prog .top{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .prog .t{font-family:var(--mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .prog .pct{font-family:var(--mono);font-weight:700;font-size:26px;color:var(--amber);letter-spacing:-1px}
+  .prog .bar{height:9px;border-radius:20px;background:rgba(28,50,82,.8);overflow:hidden;border:1px solid var(--line)}
+  .prog .bar i{display:block;height:100%;width:75%;border-radius:20px;background:linear-gradient(90deg,var(--accent),var(--amber))}
+  .prog .cap{font-size:13px;color:var(--muted2);margin-top:12px}
+  .imp .big.sm{font-size:20px;letter-spacing:0;line-height:1.25}
 </style>
 </head>
 <body id="top">
@@ -567,14 +610,20 @@
     <a href="#architecture">Platform</a>
     <a href="#eval">RAG Eval</a>
     <a href="#voice">Voice Agent</a>
+    <a href="#systems">Eval Systems</a>
     <a href="#northstar">North Star</a>
+    <a href="#iq">IQ Score</a>
+    <a href="#ab">A/B</a>
     <a href="#ticketing">Ticketing</a>
     <a href="#migration">Celery → Airflow</a>
     <a href="#pipeline">HIPAA / X12</a>
     <a href="#integrity">Data Integrity</a>
     <a href="#metrics">Impact</a>
+    <a href="#next">What's Next</a>
     <a href="#ownership">Ownership</a>
     <a href="#issues">Issues</a>
+    <a href="#fixnext">Fix Next</a>
+    <button type="button" id="toggleDeep" class="deepbtn">Expand all</button>
   </div>
 </nav>
 
@@ -588,7 +637,7 @@
       <div class="stat"><div class="n" style="font-size:clamp(19px,2.5vw,27px)">0 → 1.2M+</div><div class="l">Onboarded users on the platform I architected, from zero</div><div class="l" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><strong style="color:var(--accent);font-family:var(--mono);letter-spacing:1px">HIPAA</strong> — compliant multi-tenant benefits backend (834 / 837p)</div></div>
       <div class="stat"><div class="n">≥90%</div><div class="l">Faithfulness gate on the RAG eval harness — with ≤2% hallucination</div><div class="l" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><strong style="color:var(--accent);font-family:var(--mono);letter-spacing:1px">3-LAYER · GATED</strong> — deterministic + RAGAS + phase checks block every unsafe deploy</div></div>
       <div class="stat"><div class="n" style="font-size:clamp(19px,2.5vw,27px)">~3.2M / mo</div><div class="l">Voice-agent API calls at 10k calls a month — ~321 per call to LLM, TTS, STT &amp; backend</div></div>
-      <div class="stat"><div class="n sm">Celery → Airflow</div><div class="l">Census, claims &amp; ticketing unified on one MWAA framework</div></div>
+      <div class="stat"><div class="n sm">Celery → Airflow</div><div class="l">Census, claims &amp; accumulators on one MWAA framework; remaining Celery tasks migrating</div></div>
       <div class="stat"><div class="n sm">Django 4.2 → 5.2</div><div class="l">Backend hardening with test coverage grown 214 → 373+</div></div>
     </div>
   </div>
@@ -611,7 +660,7 @@
       <div class="card accent">
         <div class="k">Who uses it</div>
         <h3>Members &amp; providers, at scale</h3>
-        <p>HIPAA-verified members self-serve enrollment, claims, and ID-card questions; providers verify eligibility and precertification — across a <strong>multi-tenant</strong> backend serving hundreds of thousands of onboarded users.</p>
+        <p>HIPAA-verified members self-serve enrollment, claims, and ID-card questions; providers verify eligibility and precertification — across a <strong>multi-tenant</strong> backend serving 1.2M+ onboarded users.</p>
       </div>
     </div>
 
@@ -627,10 +676,10 @@ flowchart TD
   classDef tool fill:#0f2340,stroke:#1e4d8c,color:#ffffff
   classDef store fill:#100e0a,stroke:#4a3a28,color:#ffffff
 
-  Chat["Member / Provider<br/>Web Chat (Vue + Vite)"]:::ext --> ORCH
-  Img["Image Upload<br/>(cards, EOBs)"]:::ext --> ORCH
+  Chat["Member / Provider<br/>Web Chat (Vue + Vite)"]:::ext --> LK
+  Img["Image Upload<br/>(cards, EOBs)"]:::ext --> LK
   Voice["Phone Call (PSTN)"]:::ext --> TW["Twilio SIP trunk"]:::edge
-  TW --> LK["LiveKit Cloud<br/>WebRTC + SIP · AWS Transcribe STT<br/>TTS by stage — Polly or ElevenLabs"]:::edge
+  TW --> LK["LiveKit Cloud · agents 1.8.9<br/>voice, SIP and web chat · AWS Transcribe STT<br/>TTS by stage — Polly or ElevenLabs"]:::edge
   LK --> ORCH["Operator Dispatch<br/>multi-tenant route by DNIS"]:::core
 
   ORCH --> AFront["Concierge Agent<br/>greeting + member/provider intent"]:::agent
@@ -647,7 +696,7 @@ flowchart TD
   AFront --> CWT["Warm Transfer<br/>supervisor consult room"]:::agent
   AIntake --> EDI[("S3 intake_data → EventBridge<br/>→ Airflow 278 EDI")]:::store
 
-  ORCH -.->|transcripts + audio after each turn| S3[("S3 conversation-logs")]:::store
+  ORCH -.->|transcript per turn · audio at call end| S3[("S3 conversation-logs")]:::store
   Tools --> PG[("Backend / RDS<br/>members · claims · tickets")]:::store
   RAG --> KBS3[("S3 · plan docs / KB sources")]:::store
 
@@ -670,7 +719,37 @@ flowchart TD
   <div class="wrap">
     <div class="seclabel rev">Trust &amp; Reliability</div>
     <h2 class="rev">A RAG Evaluation Framework That Gates Deploys</h2>
-    <p class="sub rev">An agent that talks to patients about their coverage cannot ship on vibes. I built a fully <strong>AWS-native, HIPAA-safe evaluation pipeline</strong> on <strong>Bedrock + RAGAS</strong> that scores every transcript against a golden set, computes aggregate metrics, and <strong>blocks deployment</strong> when a quality gate fails. Once a change clears the gate, an <strong>A/B harness</strong> decides whether it is actually <em>better</em> — per-call variant assignment, paired offline runs first, live splits only for low-risk knobs (A/B testing).</p>
+    <p class="sub rev" style="margin-bottom:16px">An agent that talks to patients about their coverage cannot ship on vibes.</p>
+    <ul class="lst lead rev">
+      <li><strong>Every call, today:</strong> creates a ticket with a summary and a structured JSON record built from the transcript (CSAT score, confidence and more).</li>
+      <li><strong>Pipeline:</strong> an Airflow (MWAA) pipeline processes each record. When the first pass isn&rsquo;t confident, it re-runs the call with a stronger model (Sonnet 5.5, escalating to Opus 5.5) to build a detailed per-ticket object.</li>
+      <li><strong>Reporting:</strong> Marimo notebooks turn that data into internal metrics and the KPI reports customers see (<a href="#top" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-dim)">Customer Pulse ↗</a>).</li>
+      <li><strong>Release gating:</strong> a 3-layer RAG evaluation harness on Bedrock + RAGAS scores a golden set and blocks deployment when a gate fails.</li>
+      <li><strong>After the gate:</strong> a reference-ticket QA harness compares baseline and variant offline. Live per-call splits are planned (<a href="#ab" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-dim)">A/B testing ↗</a>).</li>
+    </ul>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>online vs offline evaluation · how the pieces fit</span><span class="tag">online scoring + offline release gate</span></div>
+      <div class="body">
+<div style="color:var(--accent);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin-bottom:6px">ONLINE · real calls, no answer key</div>
+<pre class="mermaid">
+flowchart LR
+  classDef on fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef rep fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef off fill:#2a2108,stroke:#f5a623,color:#fff5de
+  CALL["Live call<br/>agent on LiveKit 1.8.9"]:::on --> REC["Per-call record<br/>summary, CSAT, confidence"]:::on --> PIPE["MWAA pipeline<br/>Sonnet 5.5, Opus 5.5 if unsure<br/>stores per-ticket objects"]:::on --> NB["Marimo reports<br/>internal metrics, customer KPIs"]:::rep
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓ a bad number: add that call to the golden set (deploys feed new calls back to the top)</div>
+<div style="color:#f5a623;font-family:var(--mono);font-size:12px;letter-spacing:1px;margin-bottom:6px">OFFLINE · before release, with an answer key</div>
+<pre class="mermaid">
+flowchart LR
+  classDef on fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef rep fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef off fill:#2a2108,stroke:#f5a623,color:#fff5de
+  GOLD["Golden set<br/>plus scripted calls"]:::off --> QA["Reference-ticket<br/>QA harness<br/>baseline vs variant"]:::off --> RAG["RAGAS on Bedrock<br/>Haiku 5.5, Sonnet 5.5,<br/>Opus 5.5"]:::off --> GATE{"Quality gates<br/>pass: deploy<br/>fail: block"}:::off
+</pre>
+      </div>
+    </div>
 
     <div class="diagram rev">
       <div class="dhead"><span>event-driven eval pipeline · S3 → EventBridge → MWAA</span><span class="tag">offline benchmarking + quality gates</span></div>
@@ -682,25 +761,28 @@ flowchart LR
   classDef step fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
   classDef gate fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
   classDef out fill:#100e0a,stroke:#4a3a28,color:#fff
-
-  T["Transcripts<br/>(agent calls / QA upload)"]:::src --> S3["S3 bucket"]:::src
-  S3 --> EB["EventBridge"]:::trig --> LMB["Lambda trigger"]:::trig --> DAG
-
-  subgraph DAG["MWAA · eval_sally DAG"]
-    direction TB
-    D["deterministic<br/>fields · branching · ASR · latency"]:::step
-    R["RAGAS via Bedrock Claude<br/>faithfulness · relevancy · context"]:::step
-    P["phase-level<br/>healthcare compliance"]:::step
-    A["aggregate"]:::step
-    D --> A
-    R --> A
-    P --> A
-  end
-
-  A --> G{"Quality<br/>Gates"}:::gate
-  G -->|PASS| OK["Safe to deploy"]:::step
-  G -->|FAIL| SNS["SNS alert + block"]:::out
+  T["Transcripts<br/>(agent calls / QA upload)"]:::src --> S3["S3 bucket"]:::src --> EB["EventBridge"]:::trig --> LMB["Lambda trigger"]:::trig
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓ triggers the DAG</div>
+<pre class="mermaid">
+flowchart LR
+  classDef src fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef trig fill:#1a1040,stroke:#4c3a9e,color:#fff
+  classDef step fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef gate fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  classDef out fill:#100e0a,stroke:#4a3a28,color:#fff
+  DAG["MWAA eval_sally DAG<br/>deterministic checks<br/>RAGAS via Bedrock Claude<br/>phase-level compliance"]:::step --> A["aggregate"]:::step --> G{"Quality<br/>Gates"}:::gate
   A --> M[("metrics history<br/>+ HTML dashboard")]:::out
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓ gate result</div>
+<pre class="mermaid">
+flowchart LR
+  classDef src fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef trig fill:#1a1040,stroke:#4c3a9e,color:#fff
+  classDef step fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef gate fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  classDef out fill:#100e0a,stroke:#4a3a28,color:#fff
+  OK["PASS<br/>Safe to deploy"]:::step ~~~ SNS["FAIL<br/>SNS alert + block"]:::out
 </pre>
       </div>
     </div>
@@ -725,8 +807,8 @@ flowchart LR
       </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:46px">Metrics That Matter</div>
-    <p class="sub rev" style="margin-bottom:18px">RAGAS provides the judge templates; I defined the targets and the offline benchmarking loop that moves them. These are <strong>release-gate</strong> metrics — measured offline against a golden set, per release candidate. The separate question of whether real production calls actually finished the job is a different system with no metrics in common;.</p>
+    <details class="deep"><summary>Metrics that matter · detail</summary><div class="deepbody">
+    <p class="sub rev" style="margin-bottom:18px">RAGAS provides the judge templates; I defined the targets and the offline benchmarking loop that moves them. These are <strong>release-gate</strong> metrics — measured offline against a golden set, per release candidate. The separate question of whether real production calls actually finished the job is a different system with no metrics in common; that one lives on the <a href="#systems" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-dim)">metrics deep dive →</a></p>
     <div class="tbl rev">
       <table>
         <thead><tr><th>Metric</th><th>What it measures</th><th>Layer</th><th>Target</th></tr></thead>
@@ -743,9 +825,10 @@ flowchart LR
       </table>
     </div>
 
-    <div class="seclabel rev" style="margin-top:40px">Quality Gates · A Single FAIL Blocks Release</div>
+    </div></details>
+<div class="seclabel rev" style="margin-top:40px">Quality Gates · A Single FAIL Blocks Release</div>
     <div class="diagram rev">
-      <div class="dhead"><span>aggregate_and_gate · go / no-go</span><span class="tag">6 blocking gates (v1) → 10 (v3)</span></div>
+      <div class="dhead"><span>aggregate_and_gate · go / no-go</span><span class="tag">6 blocking gates (v1) → 8 (v2) · +2 warnings</span></div>
       <div class="body">
 <pre class="mermaid">
 flowchart LR
@@ -765,14 +848,79 @@ flowchart LR
     </div>
 
     <div class="cards c3 rev" style="margin-top:26px">
-      <div class="card coral"><div class="k">v1 · Form Intake <span class="status shipped">shipped</span></div><h3>Foundation</h3><p>Deterministic + core RAGAS + phase compliance, 6 blocking gates, S3 static HTML dashboard.</p></div>
-      <div class="card coral"><div class="k">v2 · RAG Voice Agent <span class="status wip">in progress</span></div><h3>Production flywheel</h3><p>Building out the full RAGAS suite (MRR / NDCG / context) and agent metrics with self-hosted <strong>Langfuse</strong>: trace → annotate → golden set → re-eval.</p></div>
-      <div class="card coral"><div class="k">v3 · Multimodal <span class="status future">future</span></div><h3>Continuous</h3><p>Planned: raw-audio WER, TTS MOS, tone/empathy scoring, real-time eval on production calls, and A/B testing with statistical rigor. The <strong>Langfuse</strong> annotation flywheel may land here rather than in v2.</p></div>
+      <div class="card accent"><div class="k">v1 · Form Intake <span class="status shipped">done</span></div><h3>Foundation</h3><p>Deterministic + core RAGAS + phase compliance, 6 blocking gates, S3 static HTML dashboard.</p></div>
+      <div class="card accent"><div class="k">v2 · RAG Voice Agent <span class="status shipped">mostly done</span></div><h3>Production flywheel</h3><p>The full RAGAS suite (MRR / NDCG / context) and agent metrics with self-hosted <strong>Langfuse</strong>: trace → annotate → golden set → re-eval.</p></div>
+      <div class="card amber"><div class="k">v3 · Multimodal <span class="status wip">planned</span></div><h3>Continuous</h3><p>Planned: raw-audio WER, TTS MOS, tone/empathy scoring, real-time eval on production calls, and A/B testing with statistical rigor. The <strong>Langfuse</strong> annotation flywheel may land here rather than in v2.</p></div>
     </div>
 
-    <p class="sub rev" style="margin-top:22px;font-size:14px;color:var(--muted2)"><strong style="color:var(--amber)">Version note:</strong> these v1/v2/v3 numbers belong to the <strong>RAG eval harness</strong> — the offline, golden-set gate. Customer Pulse has its own separate v2 (a tiered LLM-as-judge on production calls); the two share the Bedrock substrate but no metric appears in both.</p>
+    <p class="sub rev" style="margin-top:22px;font-size:14px;color:var(--muted2)"><strong style="color:var(--amber)">Version note:</strong> these v1/v2/v3 numbers belong to the <strong>RAG eval harness</strong> — the offline, golden-set gate. Customer Pulse has its own separate v2 (a tiered LLM-as-judge on production calls); the two share the Bedrock substrate but <a href="#systems" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-dim)">no metric appears in both</a>.</p>
 
     <p class="sub rev" style="margin-top:18px">Why RAGAS + Bedrock over DeepEval, TruLens, or Phoenix: RAGAS brings battle-tested judge templates and <strong>agent/tool metrics</strong> with a swappable LLM backend, while Bedrock keeps the whole thing <strong>HIPAA-eligible</strong> — PHI never leaves the account.</p>
+
+    <div class="refs rev" style="grid-template-columns:1fr;margin-top:26px">
+      <a class="ref" href="#top">
+        <div class="t">⬡ Metrics deep dive — Customer Pulse &amp; the intake North Star →</div>
+        <div class="u">/metrics</div>
+        <div class="d">The full measurement layer: the glass-box North Star KPI and what 60% means, the business metrics (deflection, agent hours saved, the 1% → 100% traffic ramp), every metric we track today with its source, and the v2 tiered LLM-as-judge with its escalation and calibration gates.</div>
+      </a>
+    </div>
+  </div>
+</section>
+<!-- TWO SYSTEMS -->
+<section id="systems">
+  <div class="wrap">
+    <div class="seclabel rev">Orientation</div>
+    <h2 class="rev">Two Evaluation Systems, Different Jobs</h2>
+    <p class="sub rev" style="margin-bottom:16px">There are two separate evaluation layers on this platform, and they are easy to conflate.</p>
+    <ul class="lst lead rev">
+      <li><strong>Release gate:</strong> asks <strong>"is the agent good enough to ship?"</strong> and blocks a release when the answer is no.</li>
+      <li><strong>Customer Pulse:</strong> asks <strong>"did the agent actually finish the job for real callers?"</strong> and steers the program.</li>
+      <li><strong>What differs:</strong> inputs, cadence and consequence.</li>
+      <li><strong>What they share:</strong> <strong>no metric appears in both</strong>.</li>
+    </ul>
+
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th></th><th>RAG eval harness — gates deploys</th><th>Customer Pulse — North Star and v2</th></tr></thead>
+        <tbody>
+          <tr><td>Question</td><td class="v">Is the agent safe and accurate enough to release?</td><td class="v">Did real intake calls end in a delivered EDI file?</td></tr>
+          <tr><td>Runs against</td><td class="v">A curated <strong>golden set</strong>, offline</td><td class="v">Every <strong>production call</strong>, continuously</td></tr>
+          <tr><td>Cadence</td><td class="v">Per release candidate</td><td class="v">Daily, published to the client</td></tr>
+          <tr><td>Example metrics</td><td class="v">Faithfulness · hallucination rate · context recall · tool-call accuracy · branching accuracy · critical phase violations</td><td class="v">North Star KPI · call disposition · root-cause attribution · deflection &amp; agent hours saved</td></tr>
+          <tr><td>Failure means</td><td class="v"><strong>Deploy is blocked.</strong> One FAIL out of six gates stops the release</td><td class="v"><strong>Work gets reprioritized.</strong> The top root-cause bucket sets the next sprint</td></tr>
+          <tr><td>Audience</td><td class="v">Engineering — a release gate</td><td class="v">The client — a self-serve dashboard</td></tr>
+          <tr><td>Documented in</td><td class="v"><a href="#eval" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-dim)">RAG Eval section ↗</a></td><td class="v">The North Star, IQ and v2 sections below</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout rev">
+      <p><strong>Why they're kept apart.</strong> A gate metric has to be <em>stable</em> — it runs against a fixed golden set so a regression means the agent changed, not that the callers did. A business metric has to be <em>live</em> — it moves with real traffic, and that movement is the signal. Blending them produces a number that can't do either job: you can't gate on something that drifts with call mix, and you can't steer with something frozen to last quarter's test set.</p>
+    </div>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>where each number is born · online vs offline</span><span class="tag">online runs today</span></div>
+      <div class="body">
+<div style="color:var(--accent);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:4px 0 6px">ONLINE · EVERY PRODUCTION CALL</div>
+<pre class="mermaid">
+flowchart LR
+  classDef on fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef rep fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef off fill:#2a2108,stroke:#f5a623,color:#fff5de
+  C["Call ends<br/>transcript plus deterministic facts"]:::on --> R["Per-call record<br/>csat, confidence, disposition"]:::on --> J["Tiered judge<br/>Sonnet 5.5, Opus 5.5 on hard calls"]:::on --> T[("Per-ticket object")]:::on
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓</div>
+<div style="color:#8fb4ff;font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:4px 0 6px">REPORTING AND OFFLINE</div>
+<pre class="mermaid">
+flowchart LR
+  classDef on fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef rep fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef off fill:#2a2108,stroke:#f5a623,color:#fff5de
+  NB["Marimo notebooks<br/>North Star, deflection, escalation rate"]:::rep --> G["Golden set<br/>bad calls added"]:::off --> GATE["Release gates<br/>RAG eval harness"]:::off
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">safe changes ship, and new calls feed the top row again</div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -781,7 +929,7 @@ flowchart LR
   <div class="wrap">
     <div class="seclabel rev">Real-Time Voice</div>
     <h2 class="rev">A Voice Agent That Holds a Real Conversation</h2>
-    <p class="sub rev">The hardest channel is the phone. Inbound PSTN calls bridge <strong>Twilio → LiveKit SIP</strong>, where the agent <strong>(Sally)</strong> runs on <strong>AWS Transcribe</strong> for STT. <strong>TTS is stage-dependent</strong> — beta runs ElevenLabs, preprod and prod run <strong>AWS Polly generative</strong>, a divergence that hid a P0 speech defect from every environment developers actually test in (<a href="#tco">deep dive</a>). I designed the real-time layer so Sally <strong>verifies identity before disclosing anything</strong>, reads back member IDs one character at a time using a phonetic alphabet, survives barge-in and acknowledgements, and never falls into dead silence when a provider fails.</p>
+    <p class="sub rev">The hardest channel is the phone. Inbound PSTN calls bridge <strong>Twilio → LiveKit SIP</strong>, where the agent <strong>(Sally)</strong> runs on <strong>AWS Transcribe</strong> for STT. <strong>The intake agent's TTS is stage-dependent</strong> — beta runs ElevenLabs, preprod and prod run <strong>AWS Polly generative</strong>, a divergence that hid a P0 speech defect from every environment developers actually test in (<a href="#tco">deep dive</a>). I designed the real-time layer so Sally <strong>verifies identity before disclosing anything</strong>, reads back member IDs one character at a time using a phonetic alphabet, survives barge-in and acknowledgements, and never falls into dead silence when a provider fails.</p>
 
     <div class="diagram rev">
       <div class="dhead"><span>benefits / precertification call · happy path</span><span class="tag">Twilio→LiveKit SIP · HIPAA-verified → grounded answer</span></div>
@@ -805,10 +953,10 @@ sequenceDiagram
   S->>C: Request identity → HIPAA verification
   C->>S: Member ID + DOB (consecutive digits)
   S->>C: Read back via Apple-Boy-Charlie alphabet, confirm
-  S->>API: verify_and_hydrate_member (parallel phone + DOB search)
+  S->>API: verify_and_hydrate_member (parallel primary/secondary phone search)
   alt HIPAA verified (≤ 3 tries)
     API-->>S: member_uuid
-    S->>API: PATCH ticket hipaa_verified = true
+    S->>API: PATCH ticket hipaa_verification_status = VERIFIED
     C->>S: "What's my deductible?"
     S->>KB: RetrieveAndGenerate (plan docs / accumulators)
     KB-->>S: chunks + citations
@@ -825,15 +973,16 @@ sequenceDiagram
       </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:40px">Production-Hardening I Drove</div>
+    <details class="deep"><summary>Production hardening · detail</summary><div class="deepbody">
     <div class="cards c3 rev">
       <div class="card accent"><div class="k">Config resolution</div><h3>TTS is per-agent <em>and</em> per-stage</h3><p>The concierge runs ElevenLabs <code>eleven_turbo_v2_5</code>; the <strong>intake agent runs AWS Polly generative ("Ruth", 16 kHz)</strong> in prod and preprod, and ElevenLabs only in beta. One <code>provider</code> key, deep-merged per stage — and that divergence is exactly what hid a P0 from every environment developers test in (<a href="#tco">deep dive</a>).</p></div>
       <div class="card accent"><div class="k">Naturalness</div><h3>VAD &amp; turn detection</h3><p>Silero VAD plus LiveKit's <code>MultilingualModel</code> turn detector stop the agent being cut off by "hmm" / "I see," keep RAG answers interruptible, and prevent double-speak via a shared response mixin.</p></div>
-      <div class="card accent"><div class="k">Stability</div><h3>STT session isolation</h3><p><code>ResilientAWSSTT</code> wraps AWS Transcribe with a <strong>unique session-id per agent</strong> (and a fresh one for the supervisor during transfer) — killing the silent STT failures that AWS session-id collisions used to cause.</p></div>
-      <div class="card accent"><div class="k">Accuracy</div><h3>ID read-back</h3><p>Member IDs and reference numbers are read back with an <strong>Apple-Boy-Charlie phonetic alphabet</strong> (NATO disallowed), per-digit pacing, and pronunciation normalization (HIPAA → "hip pah") — eliminating ASR failures on repeated digits.</p></div>
-      <div class="card accent"><div class="k">Compliance</div><h3>HIPAA hard gate</h3><p>No PHI is collected before verification succeeds; <strong>3-strike retry then a scripted refusal</strong>, with the ticket's <code>hipaa_verified</code> flag patched on success and caller-ID kept separate from member verification.</p></div>
+      <div class="card accent"><div class="k">Stability</div><h3>STT session isolation</h3><p><code>ResilientAWSSTT</code> wraps AWS Transcribe with a <strong>unique session-id per agent</strong> (and a fresh one for the supervisor during transfer), and retries a failed stream a bounded number of times with a fresh session — so a caller reading a chart in silence doesn't leave the agent deaf.</p></div>
+      <div class="card accent"><div class="k">Accuracy</div><h3>ID read-back</h3><p>Member IDs and reference numbers are read back with an <strong>Apple-Boy-Charlie phonetic alphabet</strong> (NATO disallowed), per-digit pacing, and pronunciation normalization (HIPAA → "hip pah") — and ticket reference numbers are spelled out by code, not left to the model to read.</p></div>
+      <div class="card accent"><div class="k">Compliance</div><h3>HIPAA hard gate</h3><p>No PHI is collected before verification succeeds; <strong>a scripted refusal after repeated failed attempts</strong>, with the ticket's <code>hipaa_verification_status</code> set to VERIFIED on success and caller-ID kept separate from member verification.</p></div>
       <div class="card accent"><div class="k">Continuity</div><h3>Warm transfer</h3><p>Escalations use a <strong>consultation-room model</strong>: Sally briefs a supervisor privately (≤15s), dials the skill queue by DTMF, then merges audio into the caller's room — recording and transcript attached to the ticket.</p></div>
-    </div>
+    </div></div></details>
+
   </div>
 </section>
 
@@ -846,20 +995,20 @@ sequenceDiagram
 
     <div class="formula rev">
       <div class="eq">North Star &nbsp;=&nbsp; EDI files delivered &nbsp;÷&nbsp; <span class="den">eligible intake calls</span></div>
-      <div class="note"><strong>Numerator</strong> — a ticket whose status reached <code>INTAKE_DELIVERED</code>: the X12 278 was generated, transmitted, and acknowledged by the payer. Not "ticket created". Not "intake attempted". Delivered.</div>
-      <div class="note" style="margin-top:8px"><strong>Denominator</strong> — calls where the caller genuinely attempted an intake <em>and</em> we had what we needed to serve them. Calls we could never have completed are excluded, and the exclusion list is fixed and published.</div>
+      <div class="note"><strong>Numerator</strong> — a ticket whose status reached <code>INTAKE_DELIVERED</code>: the X12 278 was generated and delivered. Not "ticket created". Not "intake attempted". Delivered.</div>
+      <div class="note" style="margin-top:8px"><strong>Denominator</strong> — calls the LLM evaluator classifies as a genuine intake attempt. Every other disposition is listed, with its count, next to the number. When no evaluator verdict exists, six fixed deterministic exclusions apply as the fallback.</div>
     </div>
 
     <div class="mrows rev" style="margin-top:20px">
       <div class="mrow"><span class="mk">Calls evaluated by the pipeline — <em>all</em> intents</span><span class="mv n">~25,000</span></div>
-      <div class="mrow"><span class="mk">Less the six fixed exclusions + pending re-evaluation</span><span class="mv">~9,000 · ~36%</span></div>
+      <div class="mrow"><span class="mk">Less calls not classified as an intake attempt</span><span class="mv">~9,000 · ~36%</span></div>
       <div class="mrow"><span class="mk"><strong>Eligible intake calls</strong> — the North Star denominator</span><span class="mv n">~16,000</span></div>
       <div class="mrow"><span class="mk">X12 278 EDI files delivered — the numerator</span><span class="mv n">~10,000</span></div>
       <div class="mrow"><span class="mk">North Star</span><span class="mv">~63% · goal line 60%</span></div>
     </div>
     <div class="mstrip rev" style="margin-top:18px">
-      <div class="m"><span class="mv">~10k</span><span class="ml">Numerator — identical in both rates</span></div>
-      <div class="m"><span class="mv">~40%</span><span class="ml">Against all ~25k calls — deflection</span></div>
+      <div class="m"><span class="mv">~10k</span><span class="ml">EDI files delivered — the North Star numerator</span></div>
+      <div class="m"><span class="mv">~40%</span><span class="ml">Fully handled ÷ all ~25k calls — deflection</span></div>
       <div class="m"><span class="mv">~63%</span><span class="ml">Against ~16k eligible — North Star</span></div>
       <div class="m"><span class="mv sm">both shown</span><span class="ml">Neither rate is published alone</span></div>
     </div>
@@ -869,7 +1018,7 @@ sequenceDiagram
         <li>Print them <strong>adjacent</strong> — the smaller denominator is only credible while the bigger one sits next to it.</li>
       </ul>
     </div>
-    <p class="sub rev" style="margin-top:6px">Deflection counts every call that reached the line, including ones no agent could have converted; the North Star drops those by design. Same 10k EDIs, two honest readings.</p>
+    <p class="sub rev" style="margin-top:6px">Deflection counts every call that reached the line, including ones no agent could have converted; the North Star drops those by design. Different numerators and denominators, two honest readings.</p>
 
     <div class="cards c2 rev" style="margin-top:26px">
       <div class="card accent">
@@ -881,7 +1030,7 @@ sequenceDiagram
       <div class="card coral">
         <div class="k">Excluded — and why</div>
         <h3>Calls no agent could convert</h3>
-        <p>Six fixed exclusions, evaluated per call from the deterministic pipeline's <code>unverified_reason</code>:</p>
+        <p>Fallback exclusions when no evaluator verdict exists, derived from the deterministic pipeline's <code>unverified_reason</code>:</p>
         <div class="chiprow" style="margin-top:12px">
           <span class="chip"><b>caller_hung_up</b></span>
           <span class="chip"><b>web_form_redirect</b></span>
@@ -890,20 +1039,19 @@ sequenceDiagram
           <span class="chip"><b>not_in_census_feed</b></span>
           <span class="chip"><b>not_in_census</b></span>
         </div>
-        <div class="tie"><b>Also excluded</b>Calls still <strong>pending re-evaluation</strong> — a ticket mid-flight isn't a failure yet, and counting it as one would make every day look worse than it was until the backlog cleared.</div>
-      </div>
+              </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:46px">What "60%" Means</div>
+    <details class="deep"><summary>What "60%" means · detail</summary><div class="deepbody">
     <div class="mstrip rev">
       <div class="m"><span class="mv">6 / 10</span><span class="ml">Eligible calls that must end in a delivered EDI</span></div>
-      <div class="m"><span class="mv">5</span><span class="ml">Round-trip steps the commitment spans</span></div>
+      <div class="m"><span class="mv">4</span><span class="ml">Round-trip steps the commitment spans</span></div>
       <div class="m"><span class="mv sm">daily</span><span class="ml">Cadence the gap is visible at, not quarterly</span></div>
       <div class="m"><span class="mv sm">throughput</span><span class="ml">Not a quality pass mark, not a ceiling</span></div>
     </div>
     <div class="appr rev"><b>Approach</b>
       <ul>
-        <li>Set the bar on the <strong>full round trip</strong> — verify member → capture clinical detail → generate the 278 → transmit → get it acknowledged. Anything short of acknowledged doesn't count.</li>
+        <li>Set the bar on the <strong>full round trip</strong> — verify member → capture clinical detail → generate the 278 → deliver it. Anything short of delivered doesn't count.</li>
         <li>Render it as a <strong>fixed dashed line</strong> on the trend chart, so the gap is legible on any given day rather than reconstructed at quarter-end.</li>
       </ul>
     </div>
@@ -911,8 +1059,8 @@ sequenceDiagram
 
     <div class="chartbox rev">
       <div class="chead">
-        <span>north star daily trend · Mar → Jun · vs. 60% SMART goal</span>
-        <span class="illus">7-day volume-weighted</span>
+        <span>north star daily trend · illustrative shape · vs. 60% SMART goal</span>
+        <span class="illus">illustrative · 7-day volume-weighted</span>
       </div>
       <div class="cbody"><svg id="nsChart" viewBox="0 0 900 360" role="img" aria-label="North Star trend from March to June crossing the 60 percent SMART goal in May"></svg></div>
       <div class="legend">
@@ -921,7 +1069,7 @@ sequenceDiagram
         <span><i class="bar"></i> Eligible intake volume</span>
       </div>
     </div>
-    <p class="sub rev" style="margin-top:14px;font-size:14px;color:var(--muted2)">Volumes throughout this page are rounded to order of magnitude and carry no client identifier.</p>
+    <p class="sub rev" style="margin-top:14px;font-size:14px;color:var(--muted2)">Volumes throughout this portfolio are rounded to order of magnitude and carry no client identifier.</p>
 
     <div class="cards c3 rev" style="margin-top:30px">
       <div class="card accent">
@@ -957,6 +1105,172 @@ sequenceDiagram
         </div>
         <p>Holding, rather than crossing, is what turned the target from aspiration into baseline.</p>
       </div>
+    </div></div></details>
+
+  </div>
+</section>
+<!-- IQ SCORE -->
+<section id="iq">
+  <div class="wrap">
+    <div class="seclabel rev">Quality Gate &middot; Beta</div>
+    <h2 class="rev">From Pass/Fail to IQ</h2>
+    <p class="sub rev">The six-gate eval answers &ldquo;is this build safe to ship?&rdquo; with pass or fail. The <strong>TruVo IQ score</strong> answers a harder question for the FDHN-powered agent: <strong>how much of what members actually ask can it resolve, plan by plan?</strong> It is expressed on the human IQ scale so the number is legible to a client, and it is explicitly a scoreboard &mdash; it exists to drive the next piece of work.</p>
+
+    <div class="formula rev">
+      <div class="eq">IQ &nbsp;=&nbsp; round( 100 + ( <span class="den">RR</span> &minus; 0.80 ) &times; 150 )</div>
+      <div class="note"><strong>RR</strong> (resolution rate) = ( autonomous + 0.5 &times; partial ) &divide; <strong>TAM</strong>. 80% resolution is IQ 100; every 10 points of resolution moves the score 15 &mdash; one standard deviation.</div>
+      <div class="note" style="margin-top:8px"><strong>TAM</strong> (total addressable market) is the full universe of member question categories. A category the agent cannot answer yet still counts in the denominator, at zero. <strong>SAM</strong> removes categories the client confirmed out of scope at onboarding, so the board can show both: the member&rsquo;s experience (TAM) and the agent&rsquo;s accountability (SAM).</div>
+    </div>
+
+        <div class="diagram rev">
+      <div class="dhead"><span>TruVo IQ &middot; from question battery to release gate</span><span class="tag warn">min across plans, never the average</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart LR
+  classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef io fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef hot fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  Q["Question battery<br/>x each plan option"]:::s --> G["Graded<br/>auto 1.0 · partial 0.5 · redirect 0"]:::s --> T["TAM = every question category<br/>blocked questions counted at 0"]:::s --> R["RR = (auto + 0.5 x partial) / TAM"]:::s
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓</div>
+<pre class="mermaid">
+flowchart LR
+  classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef io fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef hot fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  I["IQ = 100 + (RR - 0.80) x 150"]:::io --> M["Overall = lowest plan option"]:::hot --> GATE{"Every plan option >= 100?"}:::hot --> OK["Yes: competent, can ship<br/>No: not released"]:::io
+</pre>
+      </div>
+    </div>
+
+    <details class="deep"><summary>Grades and bands &middot; detail</summary><div class="deepbody"><div class="tbl rev" style="margin-top:20px">
+      <table>
+        <thead><tr><th>Grade</th><th>Credit</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Autonomous</td><td class="v">1.0</td><td class="v">Complete, actionable answer; no follow-up call needed</td></tr>
+          <tr><td>Partial</td><td class="v">0.5</td><td class="v">Useful context, but the member still has to call for the key detail</td></tr>
+          <tr><td>Redirect</td><td class="v">0.0</td><td class="v">&ldquo;Call the number on your card.&rdquo; Text was returned, nothing was resolved</td></tr>
+          <tr><td>Blocked</td><td class="v">0.0</td><td class="v">The data to answer does not exist yet; counted, never excluded</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="appr rev"><b>Approach</b>
+      <ul>
+        <li><strong>Honest scoring.</strong> A response that deflects is a redirect even though the agent said something. &ldquo;All questions returned an answer&rdquo; is not a pass.</li>
+        <li><strong>Scored per plan option.</strong> Each benefit option within a group is graded on its own, because members ask about their plan, not the average of the group&rsquo;s plans.</li>
+        <li><strong>Bands:</strong> 130+ Exceptional &middot; 115&ndash;129 Superior &middot; 100&ndash;114 Competent &middot; 85&ndash;99 Developing &middot; 70&ndash;84 Limited &middot; below 70 Impaired.</li>
+      </ul>
+    </div>
+
+    </div></details>
+
+    <div class="callout rev">
+      <p><strong>The production gate checks the minimum, never the average.</strong> The overall score is the <em>weakest</em> plan option, and the release rule is that an agent must reach <strong>Competent (IQ 100)</strong> on <em>every</em> plan option before it goes to production. One strong plan cannot carry a weak one through. The rule is blunt on purpose: we don&rsquo;t release agents that cannot reliably find a member&rsquo;s path to care.</p>
+    </div>
+
+    <div class="cards c3 rev" style="margin-top:22px">
+      <div class="card"><div class="k">Six-gate RAG eval</div><h3>Is the build safe?</h3><p>Offline gates over a curated golden set &mdash; deterministic checks, RAGAS judges, phase compliance. A single FAIL out of six blocks the release.</p></div>
+      <div class="card"><div class="k">Customer Pulse &middot; v2</div><h3>Is production working?</h3><p>Every live call scored and bucketed against the North Star, with the tiered LLM-as-judge adding the semantic checks.</p></div>
+      <div class="card accent"><div class="k">TruVo IQ</div><h3>How capable is this agent, per plan?</h3><p>Sits before release for the FDHN-powered agent: a question battery run against each plan option, graded, rolled up to one number the gate can enforce.</p></div>
+    </div>
+    <p class="sub rev" style="margin-top:14px">All three use the same discipline &mdash; deterministic math over graded inputs, a published formula, and a threshold that drives action: the two gates block a release, Customer Pulse resets priorities. They differ in what they judge: the build, the live call, and the plan-by-plan capability of the agent.</p>
+  </div>
+</section>
+<!-- A/B TESTING -->
+<section id="ab">
+  <div class="wrap">
+    <div class="seclabel rev">Experimentation</div>
+    <h2 class="rev">Did the Change Actually Help?</h2>
+    <p class="sub rev">The two evaluation systems answer <strong>"is it safe to ship?"</strong> and <strong>"did it finish the job?"</strong>. Neither answers the question every prompt, model or voice change raises: <strong>"is this version better than the last one?"</strong> Before the reference-ticket harness, a change was judged by the next nightly eval run — every prompt iteration was a leap of faith. Now each change is a controlled comparison with its sample size decided up front: the offline stage runs today, and the live 50/50 split follows per-call variant binding.</p>
+
+        <div class="diagram rev">
+      <div class="dhead"><span>change &rarr; offline &rarr; live</span><span class="tag">anything that changes the 278 never gets a live split</span></div>
+      <div class="body">
+<pre class="mermaid">
+flowchart TB
+  classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef io fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef hot fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+
+  subgraph ROW1[" "]
+    direction LR
+    C["Change<br/>prompt, model, upgrade"]:::s --> QA["Stage 1 offline: QA caller<br/>same scripted scenarios"]:::s
+    C --> HR["Stage 1 offline: reference-ticket harness<br/>baseline vs variant"]:::s
+    QA --> SC["Score: deterministic + RAGAS + judge<br/>no patient traffic"]:::s
+    HR --> SC
+  end
+  subgraph ROW2[" "]
+    direction LR
+    W{"Wins offline?"}:::hot -->|"no"| STOP["Stop"]:::hot
+    W -->|"yes, or caller-experience knob"| L["Stage 2 · live 50/50<br/>hash(call_id)"]:::io
+    L --> GR["Guardrails<br/>transfer rate, hang-up auto-stop"]:::hot
+  end
+  ROW1 --> ROW2
+  style ROW1 fill:none,stroke:none
+  style ROW2 fill:none,stroke:none
+</pre>
+      </div>
+    </div>
+
+    <div class="impact rev">
+      <div class="imp"><div class="big">167 / day</div><div class="d">Calls per arm on a 50/50 split at 333 calls a day</div></div>
+      <div class="imp"><div class="big">~6 days</div><div class="d">To detect a 5-point drop (20% → 15%) — 906 calls per arm, α 0.05, 80% power</div></div>
+      <div class="imp"><div class="big">~37 days</div><div class="d">To detect a 2-point drop (20% → 18%) — 6,039 calls per arm, so small effects go offline first</div></div>
+      <div class="imp"><div class="big">0 new infra</div><div class="d">Variant rides on existing telemetry — call usage record, intake record, SupportTicket</div></div>
+    </div>
+
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>What gets tested</th><th>Success metric</th><th>How</th></tr></thead>
+        <tbody>
+          <tr><td>Intake system prompt v1 → v2</td><td class="v">North Star · required fields captured · intake completion</td><td class="v">Offline paired → live split</td></tr>
+          <tr><td>LLM model (Sonnet 5.5 → newer) · RAG model</td><td class="v">Eval score · TTFT · <code>cost_usd</code> per call</td><td class="v">Paired offline on identical scenarios</td></tr>
+          <tr><td>TTS provider &amp; voice</td><td class="v">Caller repeat requests · hang-ups · digit read-back</td><td class="v">Live, per call</td></tr>
+          <tr><td>Endpointing delay · VAD threshold</td><td class="v">Agent barge-in · dead air · call duration</td><td class="v">Live, per call</td></tr>
+          <tr><td>NPI provider-name match rules</td><td class="v">Verified-match rate · downstream corrections</td><td class="v"><strong>Offline only</strong> — replayed name captures</td></tr>
+          <tr><td>Library or platform upgrade · prompt change (whole-call regression)</td><td class="v">Every ticket fact and field, closing line, spoken reference number · no agent error</td><td class="v">Offline paired — one caller script, baseline vs variant</td></tr>
+          <tr><td>Escalation &amp; warm-transfer thresholds</td><td class="v">Transfer-to-human rate · repeat calls</td><td class="v">Live, with guardrail auto-stop</td></tr>
+          <tr><td>Member chat prompt · knowledge-base on/off</td><td class="v"><code>thumbs_up_down</code> · flag rate</td><td class="v">Live, per session</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cards c2 rev topalign">
+      <div class="card accent">
+        <div class="k">Design · Assignment</div>
+        <h3>Per-call hashing, not per-tenant splits</h3>
+        <p>Each call is assigned at <strong>OperatorAgent dispatch</strong> by hashing the call ID <strong>within its tenant</strong>. Splitting whole customers into arms would compare contracts and caller populations, not variants — and there are too few tenants to power it.</p>
+        <div class="mrows">
+          <div class="mrow"><span class="mk">Bucketing key</span><span class="mv">hash(call_id) within org</span></div>
+          <div class="mrow"><span class="mk">Variant defined in</span><span class="mv">dispatch.yaml · GroupAIConfig</span></div>
+          <div class="mrow"><span class="mk"><code>variant_id</code> stamped on</span><span class="mv">usage record · intake · ticket</span></div>
+        </div>
+        <div class="tie"><b>Tied back to</b>The same per-call usage record and ticket lifecycle that feed the <a href="#northstar">North Star</a> — so every experiment is readable on the dashboard the client already uses.</div>
+      </div>
+      <div class="card accent">
+        <div class="k">Design · Two stages</div>
+        <h3>Offline first, then live</h3>
+        <p><strong>Stage 1</strong> — the QA caller agent dials both variants with the <strong>same scripted scenarios</strong>. Paired comparison, no patient traffic, and it resolves effects far smaller than live volume can. A second offline driver, run on beta, scripts an AI caller from a real reference ticket and checks the whole call. <strong>Stage 2</strong> — a live split, only for changes that won offline or are caller-experience knobs with no clinical output.</p>
+        <div class="mrows">
+          <div class="mrow"><span class="mk">Offline driver</span><span class="mv">qa_caller_agent.py</span></div>
+          <div class="mrow"><span class="mk">Whole-call regression driver (beta)</span><span class="mv">reference-ticket harness</span></div>
+          <div class="mrow"><span class="mk">Offline scoring</span><span class="mv">deterministic + RAGAS + judge</span></div>
+          <div class="mrow"><span class="mk">Live guardrails</span><span class="mv">transfer · hang-up auto-stop</span></div>
+        </div>
+      </div>
+      <div class="card amber">
+        <div class="k">Prerequisite · per-call config</div>
+        <h3>Config is isolated per call</h3>
+        <p>Each call runs in its own OS process, and the loader resets and reloads the partner config at dispatch, so two concurrent calls never share a config today. Per-call variants need more than that: the variant has to travel with the call. The next step is to bind the resolved config into the call's <code>userdata</code> at dispatch, which makes a variant a property of the call and not of the process.</p>
+      </div>
+      <div class="card accent">
+        <p>The reference-ticket harness compares the resulting ticket and the spoken reference number with the original, and can run a baseline checkout and the new build against the same caller. It handles one call at a time and the caller is not deterministic, so it is a whole-call regression check, not the source of the sample sizes above. Used on the LiveKit 1.3.6 &rarr; 1.8.9 upgrade, the same caller against both builds showed a ticket reference number read with an extra digit on the old build too, so the upgrade was ruled out as the cause.</p>
+      </div>
+    </div>
+
+        <div class="callout rev">
+      <p><strong>The rule: anything that changes the 278 output never gets a live 50/50.</strong> NPI matching, date validation and code capture must win offline before a single real call sees them. Live splits are reserved for how Sally <em>sounds</em> and <em>paces</em> — never for what she <em>submits</em>.</p>
     </div>
   </div>
 </section>
@@ -969,25 +1283,27 @@ sequenceDiagram
     <p class="sub rev"><strong>What I owned.</strong> On top of the conversation, I designed the entire <strong>support-ticket lifecycle</strong> — agent-authored issue summaries, caller identity capture, warm hand-offs to humans with the recording and transcript attached, and provider tickets that link to <em>every</em> verified member inquired about, not just the last one.</p>
 
     <div class="diagram rev">
-      <div class="dhead"><span>support ticket · entity model</span><span class="tag">ticket → members → call artifacts</span></div>
+      <div class="dhead"><span>support ticket · entity model</span><span class="tag">simplified model · ticket → members → call artifacts</span></div>
       <div class="body">
 <pre class="mermaid">
 erDiagram
   SUPPORT_TICKET {
     uuid ticket_id PK
-    string tenant_id
+    uuid organization FK
     string category
     string caller_identity
     string caller_number
-    bool hipaa_verified
+    string hipaa_verification_status
     string status
-    text issue_summary_md
+    text conversation_summary
+    string transcript_s3_key
+    string debrief_audio_s3_key
+    string debrief_transcript_s3_key
   }
   MEMBER {
     string member_id PK
     string name
     string dob
-    bool hipaa_verified
     string enrollment_status
   }
   TICKET_MEMBER {
@@ -995,21 +1311,7 @@ erDiagram
     uuid ticket_id FK
     string member_id FK
   }
-  CALL_TRANSCRIPT {
-    uuid transcript_id PK
-    uuid ticket_id FK
-    text transcript
-    string recording_url
-    string summary_md
-  }
-  HANDOFF {
-    uuid handoff_id PK
-    uuid ticket_id FK
-    string debrief_recording_url
-    string debrief_transcript_url
-    string reason
-  }
-  CSR_NOTE {
+  TICKET_COMMENT {
     uuid note_id PK
     uuid ticket_id FK
     string subject
@@ -1018,9 +1320,7 @@ erDiagram
   }
   SUPPORT_TICKET ||--o{ TICKET_MEMBER : "1:* members"
   MEMBER ||--o{ TICKET_MEMBER : "verified"
-  SUPPORT_TICKET ||--o{ CALL_TRANSCRIPT : captures
-  SUPPORT_TICKET ||--o{ HANDOFF : "on escalation"
-  SUPPORT_TICKET ||--o{ CSR_NOTE : annotates
+  SUPPORT_TICKET ||--o{ TICKET_COMMENT : annotates
 </pre>
       </div>
     </div>
@@ -1053,7 +1353,7 @@ erDiagram
     <div class="seclabel rev">Backend Re-Architecture</div>
     <h2 class="rev">Celery → Airflow: One Workflow Framework</h2>
     <p class="sub rev"><strong>The problem.</strong> Census and claims processing lived in scattered <strong>Celery tasks</strong> — opaque retries, no run-level visibility, brittle ordering, and error handling bolted on per task. Debugging a failed enrollment file meant grepping worker logs.</p>
-    <p class="sub rev"><strong>What I did.</strong> I re-architected the data side onto <strong>Airflow (MWAA)</strong>, unifying agentic ticketing flows and batch census/claims processing into one orchestrated framework with a <strong>robust data model for validation and error handling</strong> — every record traceable, every step retryable in isolation.</p>
+    <p class="sub rev"><strong>What I did.</strong> I re-architected the data side onto <strong>Airflow (MWAA)</strong>, unifying census/claims batch processing and ticket egress into one orchestrated framework with a <strong>robust data model for validation and error handling</strong> — every record traceable, every step retryable in isolation.</p>
 
     <div class="twocol rev">
       <div class="diagram">
@@ -1078,8 +1378,8 @@ flowchart TB
 flowchart TB
   classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
   classDef new fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-  F["S3 upload"]:::new --> EB["EventBridge"]:::new
-  EB --> DAG["MWAA DAG"]:::new
+  F["Scheduled SFTP pull"]:::new --> S3["Land in S3"]:::new
+  S3 --> DAG["MWAA DAG"]:::new
   DAG --> P["parse → typed model"]:::s
   P --> V{"validate<br/>(schema + rules)"}:::new
   V -->|ok| L["load (idempotent)"]:::s
@@ -1093,7 +1393,7 @@ flowchart TB
     <div class="cards c3 rev" style="margin-top:28px">
       <div class="card accent"><div class="k">Visibility</div><h3>Run-level lineage</h3><p>Every file becomes a DAG run with per-task status — failures map to a step and an error record, not a log scroll.</p></div>
       <div class="card accent"><div class="k">Resilience</div><h3>Isolated retries</h3><p>A flaky load step retries on its own without re-parsing the whole file; bad rows quarantine instead of failing the batch.</p></div>
-      <div class="card accent"><div class="k">Reuse</div><h3>Unified framework</h3><p>The same orchestration runs ticketing flows, X12 processing, and the RAG evaluation pipeline — one mental model for the team.</p></div>
+      <div class="card accent"><div class="k">Reuse</div><h3>Unified framework</h3><p>The same orchestration runs census and claims ingest, 278 egress from intake tickets, and the intake-call evaluation DAG — one mental model for the team.</p></div>
     </div>
   </div>
 </section>
@@ -1103,14 +1403,14 @@ flowchart TB
   <div class="wrap">
     <div class="seclabel rev">Healthcare Data</div>
     <h2 class="rev">HIPAA-Compliant X12 Processing</h2>
-    <p class="sub rev">I built the multi-tenant benefits backend to ingest the EDI formats the industry actually runs on: <strong>X12 834</strong> for enrollment/census and <strong>X12 837p</strong> for professional claims — with validation and error handling as first-class citizens of the data model.</p>
+    <p class="sub rev">I built the multi-tenant benefits backend to ingest the EDI formats the industry actually runs on: <strong>X12 834</strong> for enrollment/census and <strong>837P / 837I</strong> for professional and institutional claims inbound, and <strong>278</strong> prior-auth requests outbound — with validation and error handling as first-class citizens of the data model.</p>
 
     <div class="tbl rev">
       <table>
         <thead><tr><th>Transaction</th><th>Purpose</th><th>What the pipeline guarantees</th></tr></thead>
         <tbody>
           <tr><td>X12 834</td><td class="v">Benefit enrollment &amp; maintenance (census)</td><td class="v">Member records validated against schema + business rules before load; rejects quarantined with structured error reasons</td></tr>
-          <tr><td>X12 837p</td><td class="v">Professional healthcare claims</td><td class="v">Claim lines normalized into typed models; eligible / ineligible amounts reconciled at DB level</td></tr>
+          <tr><td>X12 837P / 837I</td><td class="v">Professional and institutional healthcare claims</td><td class="v">Claim lines normalized into typed models; eligible / ineligible amounts reconciled at DB level</td></tr>
         </tbody>
       </table>
     </div>
@@ -1144,7 +1444,7 @@ flowchart TB
       <div class="card accent">
         <div class="k">Throughput</div>
         <h3>Connection pooling</h3>
-        <p>Adopted Django 5.1+ <code>psycopg</code> pooling (retiring PgBouncer) with health checks, and tuned Gunicorn to 4 workers × 2 threads — 8× concurrent capacity with auto-recycling.</p>
+        <p>Adopted Django 5.1+ per-process <code>psycopg</code> pooling with health checks (PgBouncer kept in transaction mode), and moved Gunicorn to gthread: cpu×2+1 workers × 4 threads with jittered recycling.</p>
       </div>
       <div class="card accent">
         <div class="k">Confidence</div>
@@ -1175,8 +1475,8 @@ flowchart TB
       <div class="imp"><div class="big">0 → 1.2M+</div><div class="d">Onboarded users on the platform I architected, from zero</div></div>
       <div class="imp"><div class="big">3 channels</div><div class="d">Unified text, image &amp; voice into one multi-agent RAG brain</div></div>
       <div class="imp"><div class="big">3-layer eval</div><div class="d">Bedrock-native RAGAS harness: deterministic + LLM-judge + phase compliance, all in-account</div></div>
-      <div class="imp"><div class="big">6 → 10 gates</div><div class="d">Blocking quality gates that stop any unsafe deploy from shipping</div></div>
-      <div class="imp"><div class="big">Celery → Airflow</div><div class="d">Census, claims &amp; ticketing unified on one MWAA framework</div></div>
+      <div class="imp"><div class="big">6 → 8 gates</div><div class="d">Blocking quality gates (v1 → v2), plus two warning-only checks on ASR and latency</div></div>
+      <div class="imp"><div class="big">Celery → Airflow</div><div class="d">Census, claims &amp; accumulators on one MWAA framework; remaining Celery tasks migrating</div></div>
     </div>
 
     <div class="seclabel rev" style="margin-top:42px">Voice Load at Scale · 30k calls / quarter</div>
@@ -1187,6 +1487,7 @@ flowchart TB
       <div class="imp"><div class="big">200k min</div><div class="d">Transcribe audio per month — the one line that scales linearly with call length</div></div>
       <div class="imp"><div class="big">~$13k/mo</div><div class="d">Run cost at the measured $1.30/call — ~$7.6k at the $0.76 optimized target</div></div>
     </div>
+    <p class="sub rev" style="margin-top:14px">Request mix, per-service rates and concurrency are sized from per-call request counts: ~321 requests per call, ~3.2M a month at 10k calls.</p>
 
     <div class="diagram rev">
       <div class="dhead"><span>impact flow · human phone tree → grounded agent</span><span class="tag">the transformation</span></div>
@@ -1195,10 +1496,14 @@ flowchart TB
 flowchart LR
   classDef a fill:#0f2340,stroke:#1e4d8c,color:#fff
   classDef b fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-  A["Manual benefits Q&amp;A<br/>(call center)"]:::a --> B["Multimodal multi-agent RAG"]:::b
-  B --> C["Grounded, cited answers"]:::b
-  C --> D["Agentic ticketing + warm handoff"]:::b
-  D --> E["Eval-gated, HIPAA-safe deploys"]:::b
+  A["Manual benefits Q&amp;A<br/>(call center)"]:::a --> B["Multimodal multi-agent RAG"]:::b --> C["Grounded, cited answers"]:::b
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓</div>
+<pre class="mermaid">
+flowchart LR
+  classDef a fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef b fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  D["Agentic ticketing + warm handoff"]:::b --> E["Eval-gated, HIPAA-safe deploys"]:::b
 </pre>
       </div>
     </div>
@@ -1219,6 +1524,73 @@ flowchart LR
   </div>
 </section>
 
+<!-- WHAT'S NEXT: FDHN -->
+<section id="next">
+  <div class="wrap">
+    <div class="seclabel rev">What's Next &middot; In Beta</div>
+    <h2 class="rev">What's Next: FDHN, a Knowledge Graph Under the Agent</h2>
+    <p class="sub rev">Today each agent grounds an answer by retrieving document passages at call time. <strong>FDHN</strong> (the engine behind the <strong>TruVo</strong> agent) is in beta as a streamed query service over a <strong>Neptune + OpenSearch lexical graph</strong> with graph-derived navigation facts. The design target moves a plan's structure &mdash; what is covered, at what cost share, which document wins when two disagree &mdash; into a <strong>persisted domain graph</strong>, built once at onboarding. At question time the graph supplies the facts and the LLM only says them. <em>The LLM narrates. The graph decides.</em></p>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>FDHN &middot; LLM &rarr; Graph &rarr; LLM</span><span class="tag">beta now &middot; design target dashed</span></div>
+      <div class="body">
+<div style="color:var(--accent);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:4px 0 6px">IN BETA · QUERY TIME</div>
+<pre class="mermaid">
+flowchart LR
+  classDef off fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef out fill:#1a1040,stroke:#4c3a9e,color:#ffffff
+  classDef plan fill:#2a2108,stroke:#f5a623,color:#fff5de,stroke-dasharray:5 4
+  Q["Member question"]:::out --> SVC["FDHN query service<br/>FastAPI on Fargate, streamed NDJSON"]:::core --> RET[("OpenSearch lexical graph<br/>+ Neptune navigation facts")]:::core --> FACTS["Grounded facts<br/>with citations"]:::core
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓</div>
+<pre class="mermaid">
+flowchart LR
+  classDef off fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef out fill:#1a1040,stroke:#4c3a9e,color:#ffffff
+  classDef plan fill:#2a2108,stroke:#f5a623,color:#fff5de,stroke-dasharray:5 4
+  NARR["LLM narration<br/>Bedrock Claude"]:::out --> ANS["Answer with sources<br/>streamed to the agent"]:::out
+</pre>
+<div style="color:#f5a623;font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:4px 0 6px">DESIGN TARGET · ONBOARDING TIME (dashed)</div>
+<pre class="mermaid">
+flowchart LR
+  classDef off fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef out fill:#1a1040,stroke:#4c3a9e,color:#ffffff
+  classDef plan fill:#2a2108,stroke:#f5a623,color:#fff5de,stroke-dasharray:5 4
+  DOCS["Plan documents<br/>SPD, SOB, SBC, amendments"]:::off --> EXT["LLM extraction<br/>once per document"]:::plan --> DG[("Persisted domain graph<br/>with document precedence")]:::plan
+</pre>
+      </div>
+    </div>
+
+    <div class="cards c3 rev">
+      <div class="card accent"><div class="k">L &middot; Precomputed</div><h3>Understand the plan once</h3><p>An LLM reads the plan documents offline and extracts propositions, entities and fulfillment structure. The cost and the variability are paid at onboarding, not on every call.</p></div>
+      <div class="card accent"><div class="k">G &middot; Persisted</div><h3>The graph decides</h3><p>In beta, the service answers from a lexical graph plus graph-derived navigation facts (cost-sharing, steerage, pre-cert). The onboarding-time domain graph with document precedence is the design target.</p></div>
+      <div class="card accent"><div class="k">L &middot; Last-mile</div><h3>The LLM narrates</h3><p>The model verbalizes graph-derived facts in the voice of the audience &mdash; plain-language for members, concise for providers &mdash; streamed with citations.</p></div>
+    </div>
+
+    <details class="deep"><summary>Beta stack and how it joins this platform &middot; detail</summary><div class="deepbody"><div class="cards c2 rev" style="margin-top:22px">
+      <div class="card">
+        <div class="k">Beta stack</div>
+        <ul class="lst">
+          <li>Neptune Serverless domain graph + OpenSearch Serverless lexical graph</li>
+          <li>FastAPI query service on ECS Fargate behind an ALB with WAF, streaming NDJSON</li>
+          <li>Bedrock Claude for expansion and narration</li>
+          <li>Graph builds, lexical indexing and glossary sync as Airflow DAGs on MWAA</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="k">How it joins the rest of this platform</div>
+        <ul class="lst">
+          <li>The voice and chat agents become thin clients: dispatch, verification and speech stay here; plan answers come from the graph</li>
+          <li>Quality is scored per plan option with the <a href="#iq">TruVo IQ score</a>, the designed to gate release: Competent (IQ 100+) on every plan option</li>
+          <li>Voice-agent follow-ups are ranked in <a href="#fixnext">What I'd Fix Next</a></li>
+        </ul>
+      </div>
+    </div></div></details>
+  </div>
+</section>
 <!-- OWNERSHIP -->
 <section id="ownership">
   <div class="wrap">
@@ -1244,7 +1616,7 @@ flowchart LR
         <ul class="lst">
           <li><strong>Frontend</strong> — citation UX, member/provider cards (Vue · Vite)</li>
           <li><strong>Voice / conversation</strong> — VAD, persona prompts, steerage</li>
-          <li><strong>Data engineering</strong> — golden sets, X12 834/837p ingestion</li>
+          <li><strong>Data engineering</strong> — golden sets, X12 834/837P/837I ingestion, 278 egress</li>
           <li><strong>Compliance / QA</strong> — HIPAA verification flow, phase gates</li>
           <li><strong>Infra / DevOps</strong> — MWAA, Bedrock IAM, multi-account CDK</li>
           <li><strong>Clinical partners</strong> — URAC-level plain-language answers</li>
@@ -1316,10 +1688,13 @@ flowchart LR
       <table>
         <thead><tr><th>Reported as</th><th>Actually was</th><th>Real owner</th></tr></thead>
         <tbody>
+          <tr><td>"Sally went silent halfway through the call"</td><td class="v">Fifteen seconds of <em>legitimate</em> silence — the caller was reading a chart — made AWS end the stream, and the plugin surfaced the timeout as a hard failure</td><td><span class="lyr stt">STT</span></td></tr>
+          <tr><td>"Sally is struggling with last names"</td><td class="v">Not transcription. Verification compared raw strings, so a double surname spoken with a space never matched the stored record</td><td><span class="lyr code">code</span></td></tr>
           <tr><td>"She wrote Calcutta with a C — the address won't match"</td><td class="v">A hard <strong>C</strong> and a <strong>K</strong> are near-indistinguishable over a phone codec. The transcript looked clean, the agent proceeded confidently, and the lookup failed on a different string entirely</td><td><span class="lyr stt">STT</span> <span class="lyr prompt">prompt</span></td></tr>
           <tr><td>"There's an extra zero in the ID she read back"</td><td class="v">Nothing was added. Three identical digit words in a row blur into each other on the phone, so <code>1000</code> was <em>heard</em> as a fourth zero</td><td><span class="lyr tts">TTS</span></td></tr>
           <tr><td>"Only one diagnosis code reached the record"</td><td class="v">ICD qualifier mapping in the 278 builder — the first code takes one qualifier, every code after it takes another</td><td><span class="lyr code">code</span></td></tr>
           <tr><td>"Sally is calling a hyphen a numeric 2"</td><td class="v">The warm-transfer debrief spelled the ticket number out character by character and left a bare <code>-</code> in the stream; the voice rendered it "two"</td><td><span class="lyr tts">TTS</span></td></tr>
+          <tr><td>"The AI struggles with the male/female question"</td><td class="v"><strong>There is no gender question.</strong> It was removed months earlier — gender comes from the eligibility file. The ticket described a question the agent no longer asks</td><td><span class="lyr data">nobody</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -1366,12 +1741,12 @@ flowchart TB
           <div class="m"><span class="mv bad">15s</span><span class="ml">Silence before AWS ends the stream</span></div>
           <div class="m"><span class="mv">~60</span><span class="ml">Lines in the resilient wrapper</span></div>
           <div class="m"><span class="mv">3</span><span class="ml">Failure modes caught</span></div>
-          <div class="m"><span class="mv sm">fresh UUID</span><span class="ml">Per reconnect — reuse is rejected</span></div>
+          <div class="m"><span class="mv sm">fresh UUID</span><span class="ml">Per reconnect on 1.3; 1.8.9 restarts it in-plugin</span></div>
         </div>
         <div class="appr"><b>Approach</b>
           <ul>
             <li>Wrap the vendor stream in a <strong>retry loop</strong> rather than tuning silence tolerance — the silence is legitimate.</li>
-            <li><strong>Rotate the session ID</strong> to a fresh UUID before every reconnect; AWS rejects a reconnect that reuses the prior request identifier.</li>
+            <li><strong>Rotate the session ID</strong> to a fresh UUID before every reconnect; reusing the prior request identifier is unsafe. This is the 1.3 behavior; on 1.8.9 the plugin restarts the idle timeout itself on the same session, and the wrapper stays as a bounded 3-retry safety net.</li>
             <li>Swallow one known plugin <code>UnboundLocalError</code> raised during shutdown; re-raise everything else.</li>
           </ul>
         </div>
@@ -1399,7 +1774,7 @@ flowchart TB
       </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:44px">Making the Search Key Noise-Tolerant</div>
+    <details class="deep"><summary>Search-key noise tolerance · detail</summary><div class="deepbody">
     <div class="mstrip rev">
       <div class="m"><span class="mv">0.85</span><span class="ml">Fuzzy first-name threshold</span></div>
       <div class="m"><span class="mv">0.86 / 0.67</span><span class="ml">Nearest accept vs nearest reject</span></div>
@@ -1418,9 +1793,9 @@ flowchart TB
       <div class="card accent">
         <div class="k">ID sanitization</div>
         <h3>Strip everything but alphanumerics</h3>
-        <p>Callers read IDs with dashes, spaces and pauses; STT renders those inconsistently across calls. Before any search, drop every non-alphanumeric character and uppercase — DB IDs are uppercase.</p>
+        <p>Callers read IDs with dashes, spaces and pauses; STT renders those inconsistently across calls. Before any search, drop every non-alphanumeric character and lowercase both sides of the comparison.</p>
         <div class="cb"><div class="cbh">member_verification.py</div><pre>"".join(c <span class="g">for</span> c <span class="g">in</span> str(id_str)
-        <span class="g">if</span> c.isalnum()).upper()
+        <span class="g">if</span> c.isalnum()).lower()
 
 <span class="c">"24453-8468" → "244538468"</span></pre></div>
       </div>
@@ -1454,7 +1829,8 @@ flowchart TB
 
     <div class="callout rev">
       <p><strong>The defensible part is what we refused to fix here.</strong> A caller gave a member's familiar name where the record held the legal one — the <code>Rob</code> / <code>Robert</code> row above, arriving as a real support ticket. That was closed with a <strong>prompt</strong> change requiring legal names — not by loosening the threshold. Loosening a similarity threshold on a HIPAA identity check to catch nicknames trades a compliance boundary for a UX convenience. That trade is never worth it, and the threshold is exactly where someone will be tempted to make it.</p>
-    </div>
+    </div></div></details>
+
   </div>
 </section>
 
@@ -1462,8 +1838,8 @@ flowchart TB
 <section id="tts">
   <div class="wrap">
     <div class="seclabel rev">Layer 2 · Speech Out</div>
-    <h2 class="rev">TTS — Six Ordered Stages, and the Order Is Load-Bearing</h2>
-    <p class="sub rev">Every chunk of model output passes through <code>normalize_for_tts()</code> before it reaches the voice. It is six stages applied in a fixed order, and <strong>several production bugs were caused purely by stage ordering</strong> rather than by any individual stage being wrong.</p>
+    <h2 class="rev">TTS — An Escape Step, Six Ordered Stages, and the Order Is Load-Bearing</h2>
+    <p class="sub rev">Every chunk of model output passes through <code>normalize_for_tts()</code> before it reaches the voice. It is an XML-escape step plus six stages applied in a fixed order, and <strong>several production bugs were caused purely by stage ordering</strong> rather than by any individual stage being wrong.</p>
 
     <div class="mstrip rev">
       <div class="m"><span class="mv">6</span><span class="ml">Ordered stages in the transform</span></div>
@@ -1481,22 +1857,30 @@ flowchart TB
     </div>
 
     <div class="diagram rev">
-      <div class="dhead"><span>normalize_for_tts · six ordered stages</span><span class="tag warn">order is load-bearing</span></div>
+      <div class="dhead"><span>normalize_for_tts · escape step, six ordered stages, then one SSML document per sentence</span><span class="tag warn">order is load-bearing</span></div>
       <div class="body">
 <pre class="mermaid">
-flowchart TB
+flowchart LR
   classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
   classDef hot fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
   classDef io fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-
-  IN["LLM text chunk"]:::io --> S0
-  S0["0 · XML-escape if SSML<br/>so model output can't break the parser"]:::s --> S1
-  S1["1 · Pronunciation map<br/>LONGEST KEY FIRST"]:::hot --> S2
-  S2["2 · Acronym expansion<br/>CPT to C P T, unless say-as-word"]:::hot --> S3
-  S3["3 · Long numerics, 4+ digits<br/>digit-by-digit + collapse runs"]:::hot --> S4
-  S4["4 · Single digits<br/>strip hallucinated 'five as in Sam'"]:::s --> S5
-  S5["5 · Single letters in readback<br/>T becomes T - as in Tom -"]:::hot --> S6
-  S6["6 · SSML 400ms break between<br/>consecutive identical digit words"]:::s --> OUT["TTS engine"]:::io
+  IN["LLM text chunk"]:::io --> S0["pre · XML-escape if SSML<br/>so model output can't break the parser"]:::s --> S1["1 · Pronunciation map<br/>LONGEST KEY FIRST"]:::hot --> S2["2 · Acronym expansion<br/>CPT to C P T, unless say-as-word"]:::hot
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓</div>
+<pre class="mermaid">
+flowchart LR
+  classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef hot fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  classDef io fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  S3["3 · Long numerics, 4+ digits<br/>digit-by-digit + collapse runs"]:::hot --> S4["4 · Single digits<br/>strip hallucinated 'five as in Sam'"]:::s --> S5["5 · Single letters in readback<br/>T becomes T - as in Tom -"]:::hot --> S6["6 · SSML 400ms break between<br/>consecutive identical digit words"]:::s
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓</div>
+<pre class="mermaid">
+flowchart LR
+  classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef hot fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  classDef io fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  SPL["Sentence split<br/>StreamAdapter"]:::s --> SPK["Wrap one speak root<br/>TextType=ssml"]:::hot --> OUT["Polly TTS"]:::io
 </pre>
       </div>
     </div>
@@ -1547,14 +1931,14 @@ zero ×2     → <span class="a">left alone — 2 is intelligible</span></pre></
       </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:42px">The Stage-Ordering Bugs</div>
+    <details class="deep"><summary>Stage-ordering bugs · detail</summary><div class="deepbody">
     <div class="cards c2 rev">
       <div class="card warn">
         <div class="k">Ordering bug · stage 1</div>
         <h3>Shorter key ate the longer one</h3>
         <div class="mstrip">
           <div class="m"><span class="mv amb">1</span><span class="ml">Line changed to fix it</span></div>
-          <div class="m"><span class="mv amb">~40</span><span class="ml">Map entries exposed to the ordering</span></div>
+          <div class="m"><span class="mv amb">22</span><span class="ml">Map entries exposed to the ordering</span></div>
           <div class="m"><span class="mv sm">insertion order</span><span class="ml">The implicit dependency</span></div>
         </div>
         <div class="appr"><b>Approach</b>
@@ -1586,7 +1970,8 @@ zero ×2     → <span class="a">left alone — 2 is intelligible</span></pre></
       </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:42px">Letters, Acronyms and Codes</div>
+    </div></details>
+<details class="deep"><summary>Letters, acronyms and codes · detail</summary><div class="deepbody">
     <div class="cards c2 rev">
       <div class="card accent">
         <div class="k">Issue · alphabet drift <span class="lyr prompt" style="margin-left:6px">prompt</span> <span class="lyr tts">TTS</span></div>
@@ -1608,7 +1993,7 @@ zero ×2     → <span class="a">left alone — 2 is intelligible</span></pre></
       </div>
       <div class="card accent">
         <div class="k">Issue · confusable letters <span class="lyr prompt" style="margin-left:6px">prompt</span></div>
-        <h3>C or K, Z or C, M or N, B or D, P or T</h3>
+        <h3>Z or C, M or N, B or D, P or T</h3>
         <div class="mstrip">
           <div class="m"><span class="mv bad">4</span><span class="ml">Confusable pairs handled</span></div>
           <div class="m"><span class="mv bad">silent</span><span class="ml">Failure mode — agent proceeds confidently</span></div>
@@ -1686,7 +2071,8 @@ back caller-provided VALUES.</span></pre></div>
       </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:42px">Reducing What Humans Have to Transcribe</div>
+    </div></details>
+<details class="deep"><summary>Shortening what humans transcribe · detail</summary><div class="deepbody">
     <div class="cards c2 rev">
       <div class="card accent">
         <div class="k">Fix · fewer spoken units</div>
@@ -1733,6 +2119,12 @@ back caller-provided VALUES.</span></pre></div>
         <div class="tie"><b>Why the trailing phrase</b>The last token of an utterance is the most likely to be cut by a streaming synthesizer. Requiring filler — <em>"…, is that correct?"</em> — is a <strong>TTS workaround implemented in the prompt layer</strong>, which is exactly the kind of cross-layer fix the attribution tree exists to make legible.</div>
       </div>
     </div>
+
+    <div class="callout rev bad">
+      <p><strong>The one where the prompt was never going to work.</strong> The agent kept saying an internal word — "taxonomy" — to callers. Telling the model "NEVER say taxonomy" did nothing, because the word was re-entering through a <strong>tool error message</strong>: a required parameter failed Pydantic validation, and the validation error containing the word was returned into the model's context, which then asked the caller for it.</p>
+      <p style="margin-top:12px">It took four layers to actually remove: make the field optional, rename the parameter, delete the word from the prompt entirely (<em>even a prohibition teaches the token</em>), and add a pronunciation-map entry as a last-resort net. <strong>When a model keeps saying something you've forbidden, grep your tool schemas and validation strings.</strong> Prompts don't override the text your own code feeds back into the context.</p>
+    </div></div></details>
+
   </div>
 </section>
 
@@ -1813,7 +2205,7 @@ EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
       </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:44px">Two Enforcement Layers, Deliberately</div>
+    <details class="deep"><summary>Two enforcement layers · detail</summary><div class="deepbody">
     <div class="mstrip rev">
       <div class="m"><span class="mv">3</span><span class="ml">Concerns needing <em>both</em> layers</span></div>
       <div class="m"><span class="mv">2</span><span class="ml">Code-only — invariants</span></div>
@@ -1848,7 +2240,8 @@ EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
         <p>Each non-prod environment is a <em>delta</em> under <code>overrides:</code>, deep-merged at load. The stage is baked into the image as an env var rather than supplied by a runtime secret that could drift from the deployed artifact.</p>
         <div class="tie"><b>What it prevented</b>A beta image can no longer accidentally dial the <strong>production contact centre</strong>. The deployment target became a property of the artifact.</div>
       </div>
-    </div>
+    </div></div></details>
+
   </div>
 </section>
 
@@ -1857,20 +2250,20 @@ EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
   <div class="wrap">
     <div class="seclabel rev">Cost &amp; Latency</div>
     <h2 class="rev">Paying for the Prompt Once, Not Every Turn</h2>
-    <p class="sub rev">A voice agent re-sends its entire system prompt and tool schema on <em>every single turn</em> — a 30-turn call pays for the same ~900-line state machine thirty times. Two changes fixed most of that bill, and a third moved the accounting itself out of the agent.</p>
+    <p class="sub rev">A voice agent re-sends its entire system prompt and tool schema on <em>every single turn</em> — an ~86-turn call pays for the same ~900-line state machine eighty-six times. Two changes fixed most of that bill, and a third moved the accounting itself out of the agent.</p>
 
     <div class="mstrip rev">
       <div class="m"><span class="mv">0.1×</span><span class="ml">Cache-read rate vs. standard input</span></div>
       <div class="m"><span class="mv amb">1.25×</span><span class="ml">Cache-write premium, paid once per call</span></div>
       <div class="m"><span class="mv">2</span><span class="ml">Cached segments — system prompt + tool schemas</span></div>
-      <div class="m"><span class="mv">3</span><span class="ml">Summary calls sharing one cached prefix</span></div>
+      <div class="m"><span class="mv">0</span><span class="ml">Cache writes on one-shot calls — summaries stay uncached</span></div>
       <div class="m"><span class="mv">0</span><span class="ml">Agent redeploys when a price changes</span></div>
       <div class="m"><span class="mv sm">every call</span><span class="ml">Cache hit ratio emitted, not assumed</span></div>
     </div>
     <div class="appr rev"><b>Approach</b>
       <ul>
         <li>Cache the two segments that <strong>never change within a call</strong> — the system prompt and the tool schemas — so each turn pays full rate only on the conversational delta.</li>
-        <li>Enable it on the <strong>client factory</strong>, not per call site, so every agent, background job and the QA caller inherits it and nobody can forget.</li>
+        <li>Make it a <strong>config flag, opted into at the long-lived call sites</strong> — the session LLM and the RAG LLM — so one-shot calls never pay a cache write they will not read back.</li>
         <li><strong>Measure the hit ratio</strong> per call and ship it as telemetry — a cache you don't measure is a cache you assume is working.</li>
         <li>Emit <strong>raw token counts</strong> from the agent and apply pricing downstream, so a rate change is a pipeline edit and old calls can be re-costed retroactively.</li>
       </ul>
@@ -1891,10 +2284,10 @@ EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
     </div>
 
     <div class="callout rev">
-      <p><strong>Enabling it in the factory was the actual decision.</strong> The flags live in <code>create_llm_client()</code>, which every agent and background call goes through — the concierge, the intake agent, the summary generator, even the QA caller that dials in to test us. Putting them at each call site would have worked identically on day one and drifted within a month, because the next engineer adding an agent has no reason to know the flags exist.</p>
+      <p><strong>Making it opt-in was the actual decision.</strong> The flags live in config (<code>llm.cache_system</code>, <code>llm.cache_tools</code>) with defaults in the template, and <code>create_llm_client(..., cache=True)</code> reads them only at the session LLMs and the RAG LLM. The ticket summary, supervisor briefing and escalation reason call it without <code>cache</code>: a one-shot call writes the cache at 1.25× and never reads it back, so caching it is pure cost. A tenant config that omits the flags simply runs uncached, which makes rollout a per-agent decision rather than a silent default.</p>
     </div>
 
-    <div class="seclabel rev" style="margin-top:44px">The Accounting Lives in the Pipeline, Not the Agent</div>
+    <details class="deep"><summary>Accounting lives in the pipeline · detail</summary><div class="deepbody">
     <div class="mstrip rev">
       <div class="m"><span class="mv sm">raw tokens</span><span class="ml">All the agent emits — no dollars</span></div>
       <div class="m"><span class="mv">4</span><span class="ml">Model rate cards in the pipeline's table</span></div>
@@ -1903,14 +2296,15 @@ EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
     </div>
     <div class="appr rev"><b>Approach</b>
       <ul>
-        <li>The agent logs one structured <code>llm_usage_summary</code> event per call — per-call tokens, cache reads, TTFT, tokens/sec, and whether the response was interrupted.</li>
+        <li>The agent writes a per-call usage block into the call record — tokens, cache share, TTFT and per-turn latency — with an allow-list of numeric fields so it can never carry transcript text.</li>
         <li>The <strong>eval DAG owns the rate card</strong> and enriches each record with <code>cost_usd</code>, stamping the pricing version alongside it for auditability.</li>
-        <li>Cache writes aren't reported by the framework, so the first call is <strong>inferred</strong> as a write — an approximation, and it's written down as one rather than presented as measured.</li>
+        <li>On 1.8.9 the per-call usage block carries <code>cache_write_tokens</code>; the pipeline's first-call inference covers records written before it, and is written down as an approximation rather than presented as measured.</li>
       </ul>
     </div>
     <p>Cost is a <em>pricing</em> question, not an <em>agent</em> question. Vendors reprice quarterly; a voice agent that hardcodes dollar rates needs a redeploy — and a re-certification — every time they do. Keeping the arithmetic in the pipeline also means the entire back catalogue can be recalculated against a new rate card, which is the difference between a cost number you can defend in a renewal conversation and one you can only quote.</p>
 
-    <div class="seclabel rev" style="margin-top:44px">The Pipeline Reads an Object, Not a Transcript</div>
+    </div></details>
+<div class="seclabel rev" style="margin-top:44px">The Pipeline Reads an Object, Not a Transcript</div>
     <div class="mstrip rev">
       <div class="m"><span class="mv sm">during</span><span class="ml">Record built mid-call, not extracted after</span></div>
       <div class="m"><span class="mv">1</span><span class="ml">Schema, vendored — agent and pipeline share it</span></div>
@@ -1937,7 +2331,7 @@ flowchart LR
   classDef pipe fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
 
   C["Live call<br/>cached system prompt + tools"]:::live --> R["IntakeRecord JSON<br/>validated, built during the call"]:::obj
-  C --> U["llm_usage_summary<br/>raw tokens + cache hits"]:::obj
+  C --> U["per-call usage block<br/>raw tokens + cache share"]:::obj
   R --> S["S3 + EventBridge"]:::pipe
   S --> X["278 pipeline<br/>reads fields, not prose"]:::pipe
   U --> D["Eval DAG<br/>applies the rate card"]:::pipe
@@ -1958,7 +2352,7 @@ flowchart LR
     <div class="mstrip rev">
       <div class="m"><span class="mv">$1.3024</span><span class="ml">Measured AWS cost per call — priced from billed usage</span></div>
       <div class="m"><span class="mv">$0.7597</span><span class="ml">Costed target — <strong>&minus;42%</strong>, lever by lever</span></div>
-      <div class="m"><span class="mv sm">~$70,552/yr</span><span class="ml">At 130,000 calls — LiveKit and carrier excluded from both columns</span></div>
+      <div class="m"><span class="mv sm">~$65k/yr</span><span class="ml">At 30,000 calls a quarter (120,000 a year) — LiveKit and carrier excluded from both columns</span></div>
       <div class="m"><span class="mv amb">86%</span><span class="ml">Of LLM spend is re-sent conversation context</span></div>
       <div class="m"><span class="mv bad">4 / 10</span><span class="ml">Core claims <strong>refuted</strong> under red team</span></div>
       <div class="m"><span class="mv sm">per lever</span><span class="ml">Every dollar in the target column has a named change behind it</span></div>
@@ -1989,12 +2383,12 @@ flowchart LR
   ROOT --> STT["Transcribe STT<br/>$0.2046 · 16%"]:::item
   ROOT --> OTH["Other AWS<br/>$0.0394 · 3%"]:::item
 
-  LLM --> HIST["Re-sent history<br/>86% of LLM spend"]:::pend
+  LLM --> HIST["Re-sent history<br/>56% of LLM spend"]:::pend
   HIST --> P7A["Phase 7a · messages cachePoint<br/>$3.30 to $0.330 per 1M input tokens"]:::good
   P7A --> SAVE["~$0.40 of the ~$0.50<br/>LLM saving, no fidelity risk"]:::good
 
   LLM --> P8["Phase 8 · prefix restructure<br/>ranked as the second lever"]:::pend
-  P8 --> NONE["Measured to ZERO<br/>cache writes cancel the prefix<br/>at 3+ state transitions"]:::nil
+  P8 --> NONE["Priced to ZERO<br/>cache writes cancel the prefix<br/>at 3+ state transitions"]:::nil
 
   STT --> UNT["Untouched by the plan<br/>27% of the optimized call"]:::pend
 </pre>
@@ -2011,7 +2405,16 @@ flowchart LR
           <tr><td>Polly TTS</td><td class="v">$0.2129</td><td class="v"><span class="ok">$0.1691</span></td><td class="v">Fewer synthesized characters once markup stops being spoken</td></tr>
           <tr><td>Transcribe STT</td><td class="v">$0.2046</td><td class="v"><span class="no">$0.2046</span></td><td class="v"><strong>Nothing.</strong> No lever in the plan touches it</td></tr>
           <tr><td>Other AWS</td><td class="v">$0.0394</td><td class="v">$0.0394</td><td class="v">—</td></tr>
-          <tr><td><strong>AWS total</strong></td><td class="v"><strong>$1.3024</strong></td><td class="v"><strong>$0.7597</strong></td><td class="v"><strong>&minus;42%</strong> · ~$70,552/yr at 130k calls</td></tr>
+          <tr><td><strong>AWS total</strong></td><td class="v"><strong>$1.3024</strong></td><td class="v"><strong>$0.7597</strong></td><td class="v"><strong>&minus;42%</strong> · ~$65,124/yr at 30k calls/quarter</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tbl rev" style="margin-bottom:20px">
+      <table>
+        <thead><tr><th>Lever behind the $0.76</th><th>How</th><th>Proof it worked</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Cache the conversation, not just the prompt</strong> (Phase 7a)<br><span class="v">Bedrock LLM $0.8455 &rarr; $0.3467</span></td><td class="v">A rolling cache breakpoint after the summarized block, so the growing history (56% of LLM spend; 86% counting the cached-prefix re-reads) stops being re-billed at full price every turn. The AWS plugin exposes no message-level cache point today, so this needs a small plugin subclass or an upstream change.</td><td class="v">Input-token cost per 20.3-minute call, before and after, from the same per-call telemetry and reconciled with the Bedrock bill</td></tr>
         </tbody>
       </table>
     </div>
@@ -2020,16 +2423,16 @@ flowchart LR
       <p><strong>The line I did not improve is the one worth naming out loud.</strong> Transcribe is $0.2046 before and $0.2046 after, because nothing in the plan touches it — which means it goes from 16% of a $1.30 call to <strong>27% of a $0.76 call, second only to the LLM</strong>. Optimizing a stack changes which line is the problem. A cost report that only lists wins hides the next piece of work.</p>
     </div>
 
-    <div class="seclabel rev" style="margin-top:44px">What Is Actually Deployed — Resolved Config</div>
+    <details class="deep"><summary>Resolved config · detail</summary><div class="deepbody">
     <p class="rev">Every row read from the config that ships, not from memory. <strong>The base config <em>is</em> prod</strong>; each stage lists only what differs and is deep-merged over it. Two things fall out of this table — the model routing, and the reason the P0 stayed invisible.</p>
     <div class="tbl rev">
       <table>
         <thead><tr><th>Agent</th><th>TTS in prod</th><th>Model</th><th>Why that pairing</th></tr></thead>
         <tbody>
-          <tr><td>Intake — the precert call</td><td class="v"><strong>AWS Polly</strong> · <code>Ruth</code> · generative · 16 kHz</td><td class="v">Sonnet 4.5</td><td class="v">Carries clinical capture. <strong>Not</strong> a place to trade accuracy for token price</td></tr>
-          <tr><td>Concierge — benefits Q&amp;A</td><td class="v">ElevenLabs <code>eleven_turbo_v2_5</code></td><td class="v">Sonnet 4.5</td><td class="v">Higher-fidelity voice; 3.5s endpointing vs intake's 2.5s</td></tr>
-          <tr><td>Ticket summary — offline</td><td class="v">—</td><td class="v"><span class="ok">Opus 4.5</span></td><td class="v">One call per ticket, off the hot path — worth the rate</td></tr>
-          <tr><td>QA caller — the test harness</td><td class="v">AWS Polly · <code>Stephen</code></td><td class="v"><span class="ok">Haiku 4.5</span></td><td class="v">Drives scripted scenarios. Cheapest model, zero caller risk</td></tr>
+          <tr><td>Intake — the precert call</td><td class="v"><strong>AWS Polly</strong> · <code>Ruth</code> · generative · 16 kHz</td><td class="v">Sonnet 5.5</td><td class="v">Carries clinical capture. <strong>Not</strong> a place to trade accuracy for token price</td></tr>
+          <tr><td>Concierge — benefits Q&amp;A</td><td class="v">ElevenLabs <code>eleven_turbo_v2_5</code></td><td class="v">Sonnet 5.5</td><td class="v">Higher-fidelity voice; 3.5s endpointing vs intake's 2.5s</td></tr>
+          <tr><td>Ticket summary — offline</td><td class="v">—</td><td class="v"><span class="ok">Opus 5.5</span></td><td class="v">Three calls per ticket (subject, summary, category), off the hot path — the one in-scope model-routing lever</td></tr>
+          <tr><td>QA caller — the test harness</td><td class="v">AWS Polly · <code>Stephen</code></td><td class="v"><span class="ok">Haiku 5.5</span></td><td class="v">Drives scripted scenarios. Cheapest model, zero caller risk</td></tr>
         </tbody>
       </table>
     </div>
@@ -2040,14 +2443,15 @@ flowchart LR
       <p><strong>And the stage divergence is the whole reason the P0 survived.</strong> Intake resolves to <code>provider: "aws"</code> in prod and preprod and <code>"elevenlabs"</code> in beta — with <code>ssml_enabled: true</code> in all three. Beta is the one stage where that pairing renders correctly, and beta is where people test. Every LLM call also runs on the <strong><code>us.</code> inference profile</strong>, which is why moving to <code>global.</code> for a cheaper rate is a <em>PHI data-residency</em> decision rather than an engineering one.</p>
     </div>
 
-    <div class="seclabel rev" style="margin-top:44px">The Defect the Cost Work Found</div>
+    </div></details>
+<div class="seclabel rev" style="margin-top:44px">The Defect the Cost Work Found</div>
     <div class="cards c2 rev">
       <div class="card coral">
         <div class="k">P0 · caller-facing <span class="lyr tts" style="margin-left:6px">TTS</span> <span class="lyr code">config</span></div>
         <h3>Polly was reading the markup out loud</h3>
         <div class="mstrip">
           <div class="m"><span class="mv bad">46.93s</span><span class="ml">Synthesis with markup spoken as words</span></div>
-          <div class="m"><span class="mv">10.15s</span><span class="ml">Same utterance, <code>TextType=ssml</code></span></div>
+          <div class="m"><span class="mv">10.15s</span><span class="ml">Same utterance, markup stripped (14.16s with <code>TextType=ssml</code> + speak root)</span></div>
           <div class="m"><span class="mv">5</span><span class="ml">Words Polly emits for one <code>&lt;break/&gt;</code> tag</span></div>
           <div class="m"><span class="mv sm">1 branch</span><span class="ml">Wired for ElevenLabs, not for Polly</span></div>
         </div>
@@ -2080,7 +2484,7 @@ flowchart LR
       </div>
     </div>
 
-    <div class="seclabel rev" style="margin-top:44px">The Lever That Measured to Zero</div>
+    <details class="deep"><summary>The lever that priced to zero · detail</summary><div class="deepbody">
     <p class="rev">Three scenarios, priced from the same measured token counts. The conservative column is the one that changed my mind — it gives the second-largest lever <strong>nothing</strong>.</p>
     <div class="tbl rev">
       <table>
@@ -2105,7 +2509,8 @@ flowchart LR
       <p><strong>Ranking levers by modelled saving is how you end up building the wrong one.</strong> Phase 8 looked like the second-biggest win right up until the cache-write term was carried through the arithmetic instead of assumed away. Phase 7a won not because it was the largest number but because it was the largest number <em>that survived its own caveats</em> — and it happened to be the one change with no record-fidelity risk attached.</p>
     </div>
 
-    <div class="seclabel rev" style="margin-top:44px">What the Red Team Refuted — Including Mine</div>
+    </div></details>
+<details class="deep"><summary>What the red team refuted, including mine · detail</summary><div class="deepbody">
     <p class="rev">I ran a five-lens adversarial review against my own investigation before it went anywhere near the client. Verdict: <strong>REQUEST CHANGES</strong>. Ten core claims: four proven, two unproven, <strong>four refuted</strong>.</p>
     <div class="tbl rev">
       <table>
@@ -2158,6 +2563,55 @@ flowchart LR
         <p>The written record said <strong>12</strong> failures. The measured value was <strong>18</strong>. Capturing a baseline from prose rather than from a run would have seeded the oracle with a wrong expected set and passed while six failures went unaccounted for.</p>
       </div>
     </div>
+
+    <div class="cards c2 rev">
+      <div class="card warn">
+        <div class="k">Capacity model · found by multiplying out</div>
+        <h3>The per-turn transcript sync listens for an event that no longer fires</h3>
+        <div class="mstrip">
+          <div class="m"><span class="mv amb">~86</span><span class="ml">Backend + S3 writes per call the design intended</span></div>
+          <div class="m"><span class="mv bad">0</span><span class="ml">That fire mid-call — <code>agent_speech_committed</code> is absent from livekit-agents 1.x events</span></div>
+          <div class="m"><span class="mv">~12</span><span class="ml">Backend requests per call actually made — handoffs and call end only</span></div>
+        </div>
+        <div class="appr"><b>Approach</b>
+          <ul>
+            <li>Sizing <strong>30k calls/quarter</strong> meant counting requests per call from code, not assuming them. The debounced sync in <code>assistant_agent.py</code> subscribes to a 0.x event name; the installed SDK's <code>EventTypes</code> literal doesn't contain it (checked on 1.3 and again on 1.8.9).</li>
+            <li>Consequence runs both ways: backend load is about <strong>7× lower</strong> than designed (~12 vs ~86 requests per call, so ~4k vs ~29k requests/day at ~333 calls/day), and a <strong>mid-call crash loses the transcript</strong> the backend was meant to hold.</li>
+            <li>Fix direction: subscribe to <code>conversation_item_added</code>, keep the 5 s debounce, and upload a <strong>delta</strong> rather than the full context — full re-upload grows quadratically with call length.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout rev">
+      <p><strong>The caveats travel with the number — that is what makes it usable.</strong> One term in the target column is <em>estimated</em> rather than measured: the cache write. When this was priced the usage logger had no cache-write field; the 1.8.9 usage block now records <code>cache_write_tokens</code>, so the write term can be measured rather than estimated — instead of an assumption buried in a spreadsheet. I publish the <strong>realistic</strong> column, never the optimistic one, and I name the single input I can't yet close. A cost model that tells you which of its own inputs is weakest is one you can act on. One that doesn't is a slide.</p>
+    </div></div></details>
+
+  </div>
+</section>
+<!-- WHAT I'D FIX NEXT -->
+<section id="fixnext">
+  <div class="wrap">
+    <div class="seclabel rev">Roadmap</div>
+    <h2 class="rev">What I'd Fix Next</h2>
+    <p class="sub rev">Ranked by value per effort. Each item names the change, how it would be built, and the evidence that would count as done &mdash; so a result, not a feeling, closes it.</p>
+
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>#</th><th>Improvement</th><th>How</th><th>Proof it worked</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Digit pacing on Polly's generative voice</strong></td><td class="v">Blind listening trial: SSML breaks, &ldquo;triple zero&rdquo; collapse, both; try <code>&lt;say-as interpret-as="digits"&gt;</code>.</td><td class="v">Higher read-back accuracy; request log confirms <code>TextType=ssml</code>, one <code>&lt;speak&gt;</code> root</td></tr>
+          <tr><td>2</td><td><strong>Prompt caching on every agent</strong></td><td class="v">Tenant configs inherit the cache flags from the template; one-shot calls stay uncached.</td><td class="v"><code>cacheReadInputTokens &gt; 0</code> from turn two; cached share reconciled with the Bedrock bill</td></tr>
+          <tr><td>3</td><td><strong>Measure turn-taking first</strong></td><td class="v">Staging A/B with synthetic callers: fixed vs dynamic endpointing, VAD vs adaptive interruption.</td><td class="v">Fewer false interruptions and missed barge-ins per call</td></tr>
+          <tr><td>4</td><td><strong>Grow the reference-ticket call harness</strong></td><td class="v">Separate from the telephony QA caller: replay preprod scenarios, record audio, add flow tests for the other agents.</td><td class="v">PASS/FAIL report plus a recording, not one engineer&rsquo;s test call</td></tr>
+          <tr><td>5</td><td><strong>Cheaper tier for post-call summaries</strong></td><td class="v">Route the three summary calls to a smaller model.</td><td class="v">Lower cost per call, no drop in summary quality scores</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout rev">
+      <p><strong>The longer-term lever is where the answer comes from, not how the prompt is worded.</strong> Retrieval-quality work today is tuning &mdash; chunking, prompts, reranking &mdash; applied to passages fetched at call time. <strong>FDHN</strong>, in beta, moves that grounding upstream: the plan is understood once at onboarding and persisted as a graph, so the agent reads decided facts (coverage, cost share, which document takes precedence) instead of re-deriving them from retrieved text on every call. The voice agent keeps what it is good at &mdash; verification, pacing, hand-off &mdash; and its plan answers come from the graph. See <a href="#next">What's Next: FDHN</a>.</p>
+    </div>
   </div>
 </section>
 
@@ -2198,7 +2652,7 @@ flowchart LR
       </table>
     </div>
 
-    <div class="seclabel rev" style="margin-top:44px">Value Has Four Types — and They Don't Convert</div>
+    <details class="deep"><summary>Value has four types · detail</summary><div class="deepbody">
     <p class="sub rev" style="margin-bottom:18px">The most common prioritization error is comparing across these as if they were one currency. They aren't, and two of them lose every ROI argument they're entered into.</p>
     <div class="tbl rev">
       <table>
@@ -2226,6 +2680,12 @@ flowchart LR
         <div class="tie"><b>Applied here</b>Publishing the KPI's denominator wasn't a feature. It was the artifact that made the number arguable-with, and that's what moved the traffic ramp.</div>
       </div>
     </div>
+
+    <div class="callout rev">
+      <p><strong>The regime switch is the actual skill.</strong> Run large-company process at a startup and you sound bureaucratic — charter analysis for a call three people could make in a hallway. Run startup speed logic at a large company and you sound reckless — "we'll rewrite it later" about a system with three hundred dependent teams. Either failure reads as incompetence from the other side.</p>
+      <p style="margin-top:12px">The triggers that flip you back: a second team could plausibly own it · external consumers with expectations · the first enterprise or compliance contract · the cost of being wrong exceeds the cost of deciding carefully · the thing outlives the person who built it. <strong>And the discount only ever applied to things you can throw away</strong> — anything load-bearing (data model, authz, tenancy, money movement, anything regulated) gets full rigor at any stage.</p>
+    </div></div></details>
+
   </div>
 </section>
 
@@ -2391,6 +2851,21 @@ flowchart LR
     el.style.transitionDelay=(Math.min(i%6,5)*0.05)+'s';
     io.observe(el);
   });
+</script>
+<script>
+(function(){
+  var btn=document.getElementById('toggleDeep');
+  if(!btn) return;
+  var all=function(){return Array.prototype.slice.call(document.querySelectorAll('details.deep'));};
+  var sync=function(){btn.textContent=all().some(function(d){return !d.open;})?'Expand all':'Collapse all';};
+  btn.addEventListener('click',function(){
+    var open=all().some(function(d){return !d.open;});
+    all().forEach(function(d){d.open=open;});
+    sync();
+  });
+  all().forEach(function(d){d.addEventListener('toggle',sync);});
+  sync();
+})();
 </script>
 </body>
 </html>
