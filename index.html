@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BenePower GenAI — Conversational Benefits Platform &amp; Voice-Agent Production Issues</title>
-<meta name="description" content="Architecture and production work on BenePower: multi-agent RAG, voice intake agent, HIPAA backend, eval harness, and the production issues behind a phone-based AI agent.">
+<title>BenePower GenAI — Conversational Benefits Platform &amp; Voice-Agent Deep Dives</title>
+<meta name="description" content="Architecture and production work on BenePower: multi-agent RAG, voice intake agent, HIPAA backend, eval harness, and the production engineering behind a phone-based AI agent.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Archivo:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -626,7 +626,7 @@ header.part .lede{font-size:clamp(14.5px,1.6vw,17px);max-width:840px}
     <a href="#metrics">Impact</a>
     <a href="#next">What's Next</a>
     <a href="#ownership">Ownership</a>
-    <a href="#issues">Issues</a>
+    <a href="#deep-dives">Deep Dives</a>
     <button type="button" id="toggleDeep" class="deepbtn">Expand all</button>
   </div>
 </nav>
@@ -1639,10 +1639,10 @@ flowchart LR
 
 
 
-<!-- PRODUCTION ISSUES -->
-<section id="issues">
+<!-- DEEP DIVES -->
+<section id="deep-dives">
   <div class="wrap">
-    <div class="seclabel rev">Production Issues &middot; Voice Intake Agent</div>
+    <div class="seclabel rev">Deep Dives &middot; Voice Intake Agent</div>
     <h2 class="rev">The Bugs That Only Exist on the Phone</h2>
     <p class="sub rev">A voice agent taking precertification intake fails in ways no other software does: the transcript says one thing and the audio says another, and a dash read aloud becomes the digit two. This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how it was found, and the configs that now hold the fixes in place.</p>
     <div class="impact rev">
@@ -2690,7 +2690,7 @@ flowchart LR
     <div style="margin-top:8px">
       <a href="https://www.linkedin.com/in/chintamanil/">linkedin.com/in/chintamanil</a>
     </div>
-    <div class="fl">BenePower · GenAI Benefits Platform · Architecture, Backend &amp; Voice-Agent Production Issues</div>
+    <div class="fl">BenePower · GenAI Benefits Platform · Architecture, Backend &amp; Voice-Agent Deep Dives</div>
   </div>
 </footer>
 
