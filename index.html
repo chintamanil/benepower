@@ -622,7 +622,6 @@
     <a href="#next">What's Next</a>
     <a href="#ownership">Ownership</a>
     <a href="#issues">Issues</a>
-    <a href="#fixnext">Fix Next</a>
     <button type="button" id="toggleDeep" class="deepbtn">Expand all</button>
   </div>
 </nav>
@@ -1502,12 +1501,32 @@ flowchart LR
   </div>
 </section>
 
-<!-- WHAT'S NEXT: FDHN -->
+<!-- WHAT'S NEXT -->
 <section id="next">
   <div class="wrap">
-    <div class="seclabel rev">What's Next &middot; In Beta</div>
-    <h2 class="rev">What's Next: FDHN, a Knowledge Graph Under the Agent</h2>
-    <p class="sub rev">Today each agent grounds an answer by retrieving document passages at call time. <strong>FDHN</strong> (the engine behind the <strong>TruVo</strong> agent) is in beta as a streamed query service over a <strong>Neptune + OpenSearch lexical graph</strong> with graph-derived navigation facts. The design target moves a plan's structure &mdash; what is covered, at what cost share, which document wins when two disagree &mdash; into a <strong>persisted domain graph</strong>, built once at onboarding. At question time the graph supplies the facts and the LLM only says them. <em>The LLM narrates. The graph decides.</em></p>
+    <div class="seclabel rev">What's Next</div>
+    <h2 class="rev">What's Next: Voice Fixes, then a Knowledge Graph</h2>
+    <ul class="lst lead rev">
+      <li><strong>Near term:</strong> five ranked voice-agent improvements, each with how it would be built and the evidence that closes it.</li>
+      <li><strong>Longer term (FDHN, in beta):</strong> move plan answers from per-call retrieval to a persisted knowledge graph. <em>The LLM narrates. The graph decides.</em></li>
+    </ul>
+
+    <div class="seclabel rev" style="margin-top:34px">Near term &middot; voice agent</div>
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>#</th><th>Improvement</th><th>How</th><th>Proof it worked</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Digit pacing on Polly&rsquo;s generative voice</strong></td><td class="v">Blind listening trial: SSML breaks, &ldquo;triple zero&rdquo; collapse, both.</td><td class="v">Higher read-back accuracy; request log confirms <code>TextType=ssml</code></td></tr>
+          <tr><td>2</td><td><strong>Prompt caching on every agent</strong></td><td class="v">Configs inherit the cache flags from the template; one-shot calls stay uncached.</td><td class="v"><code>cacheReadInputTokens &gt; 0</code> from turn two, reconciled with the Bedrock bill</td></tr>
+          <tr><td>3</td><td><strong>Measure turn-taking first</strong></td><td class="v">Staging A/B with synthetic callers: fixed vs dynamic endpointing, VAD vs adaptive interruption.</td><td class="v">Fewer false interruptions and missed barge-ins per call</td></tr>
+          <tr><td>4</td><td><strong>Grow the reference-ticket call harness</strong></td><td class="v">Replay preprod scenarios, record audio, add flow tests for the other agents.</td><td class="v">PASS/FAIL report plus a recording</td></tr>
+          <tr><td>5</td><td><strong>Cheaper tier for post-call summaries</strong></td><td class="v">Route the three summary calls to a smaller model.</td><td class="v">Lower cost per call, no drop in summary quality</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:34px">Longer term &middot; FDHN, in beta</div>
+    <p class="sub rev">Today each agent grounds an answer by retrieving document passages at call time. <strong>FDHN</strong> (the engine behind the <strong>TruVo</strong> agent) is a streamed query service over a <strong>Neptune + OpenSearch lexical graph</strong>. The design target is a <strong>persisted domain graph</strong> built once at onboarding, so the agent reads decided facts (coverage, cost share, which document takes precedence) instead of re-deriving them on every call.</p>
 
     <div class="diagram rev">
       <div class="dhead"><span>FDHN &middot; LLM &rarr; Graph &rarr; LLM</span><span class="tag">beta now &middot; design target dashed</span></div>
@@ -1562,8 +1581,8 @@ flowchart LR
         <div class="k">How it joins the rest of this platform</div>
         <ul class="lst">
           <li>The voice and chat agents become thin clients: dispatch, verification and speech stay here; plan answers come from the graph</li>
-          <li>Quality is scored per plan option with the <a href="#iq">TruVo IQ score</a>, the designed to gate release: Competent (IQ 100+) on every plan option</li>
-          <li>Voice-agent follow-ups are ranked in <a href="#fixnext">What I'd Fix Next</a></li>
+          <li>Quality is scored per plan option with the <a href="#iq">TruVo IQ score</a>, designed to gate release: Competent (IQ 100+) on every plan option</li>
+          <li>The voice-agent follow-ups above stay on this side of the line</li>
         </ul>
       </div>
     </div></div></details>
@@ -2546,31 +2565,6 @@ flowchart LR
       <p><strong>The caveats travel with the number — that is what makes it usable.</strong> One term in the target column is <em>estimated</em> rather than measured: the cache write. When this was priced the usage logger had no cache-write field; the 1.8.9 usage block now records <code>cache_write_tokens</code>, so the write term can be measured rather than estimated — instead of an assumption buried in a spreadsheet. I publish the <strong>realistic</strong> column, never the optimistic one, and I name the single input I can't yet close. A cost model that tells you which of its own inputs is weakest is one you can act on. One that doesn't is a slide.</p>
     </div></div></details>
 
-  </div>
-</section>
-<!-- WHAT I'D FIX NEXT -->
-<section id="fixnext">
-  <div class="wrap">
-    <div class="seclabel rev">Roadmap</div>
-    <h2 class="rev">What I'd Fix Next</h2>
-    <p class="sub rev">Ranked by value per effort. Each item names the change, how it would be built, and the evidence that would count as done &mdash; so a result, not a feeling, closes it.</p>
-
-    <div class="tbl rev">
-      <table>
-        <thead><tr><th>#</th><th>Improvement</th><th>How</th><th>Proof it worked</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td><strong>Digit pacing on Polly's generative voice</strong></td><td class="v">Blind listening trial: SSML breaks, &ldquo;triple zero&rdquo; collapse, both; try <code>&lt;say-as interpret-as="digits"&gt;</code>.</td><td class="v">Higher read-back accuracy; request log confirms <code>TextType=ssml</code>, one <code>&lt;speak&gt;</code> root</td></tr>
-          <tr><td>2</td><td><strong>Prompt caching on every agent</strong></td><td class="v">Tenant configs inherit the cache flags from the template; one-shot calls stay uncached.</td><td class="v"><code>cacheReadInputTokens &gt; 0</code> from turn two; cached share reconciled with the Bedrock bill</td></tr>
-          <tr><td>3</td><td><strong>Measure turn-taking first</strong></td><td class="v">Staging A/B with synthetic callers: fixed vs dynamic endpointing, VAD vs adaptive interruption.</td><td class="v">Fewer false interruptions and missed barge-ins per call</td></tr>
-          <tr><td>4</td><td><strong>Grow the reference-ticket call harness</strong></td><td class="v">Separate from the telephony QA caller: replay preprod scenarios, record audio, add flow tests for the other agents.</td><td class="v">PASS/FAIL report plus a recording, not one engineer&rsquo;s test call</td></tr>
-          <tr><td>5</td><td><strong>Cheaper tier for post-call summaries</strong></td><td class="v">Route the three summary calls to a smaller model.</td><td class="v">Lower cost per call, no drop in summary quality scores</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="callout rev">
-      <p><strong>The longer-term lever is where the answer comes from, not how the prompt is worded.</strong> Retrieval-quality work today is tuning &mdash; chunking, prompts, reranking &mdash; applied to passages fetched at call time. <strong>FDHN</strong>, in beta, moves that grounding upstream: the plan is understood once at onboarding and persisted as a graph, so the agent reads decided facts (coverage, cost share, which document takes precedence) instead of re-deriving them from retrieved text on every call. The voice agent keeps what it is good at &mdash; verification, pacing, hand-off &mdash; and its plan answers come from the graph. See <a href="#next">What's Next: FDHN</a>.</p>
-    </div>
   </div>
 </section>
 
