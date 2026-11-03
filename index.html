@@ -2563,24 +2563,6 @@ flowchart LR
       </div>
     </div>
 
-    <div class="cards c2 rev">
-      <div class="card warn">
-        <div class="k">Capacity model · found by multiplying out</div>
-        <h3>The per-turn transcript sync listens for an event that no longer fires</h3>
-        <div class="mstrip">
-          <div class="m"><span class="mv amb">~86</span><span class="ml">Backend + S3 writes per call the design intended</span></div>
-          <div class="m"><span class="mv bad">0</span><span class="ml">That fire mid-call — <code>agent_speech_committed</code> is absent from livekit-agents 1.x events</span></div>
-          <div class="m"><span class="mv">~12</span><span class="ml">Backend requests per call actually made — handoffs and call end only</span></div>
-        </div>
-        <div class="appr"><b>Approach</b>
-          <ul>
-            <li>Sizing <strong>30k calls/quarter</strong> meant counting requests per call from code, not assuming them. The debounced sync in <code>assistant_agent.py</code> subscribes to a 0.x event name; the installed SDK's <code>EventTypes</code> literal doesn't contain it (checked on 1.3 and again on 1.8.9).</li>
-            <li>Consequence runs both ways: backend load is about <strong>7× lower</strong> than designed (~12 vs ~86 requests per call, so ~4k vs ~29k requests/day at ~333 calls/day), and a <strong>mid-call crash loses the transcript</strong> the backend was meant to hold.</li>
-            <li>Fix direction: subscribe to <code>conversation_item_added</code>, keep the 5 s debounce, and upload a <strong>delta</strong> rather than the full context — full re-upload grows quadratically with call length.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
 
     <div class="callout rev">
       <p><strong>The caveats travel with the number — that is what makes it usable.</strong> One term in the target column is <em>estimated</em> rather than measured: the cache write. When this was priced the usage logger had no cache-write field; the 1.8.9 usage block now records <code>cache_write_tokens</code>, so the write term can be measured rather than estimated — instead of an assumption buried in a spreadsheet. I publish the <strong>realistic</strong> column, never the optimistic one, and I name the single input I can't yet close. A cost model that tells you which of its own inputs is weakest is one you can act on. One that doesn't is a slide.</p>
