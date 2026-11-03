@@ -1636,35 +1636,23 @@ flowchart LR
 </section>
 
 
-<section id="references">
-  <div class="wrap">
-    <div class="seclabel rev">More Work</div>
-    <h2 class="rev">Related Projects</h2>
-    <div class="refs rev">
-      <a class="ref" href="https://chintamanil.github.io/cybershield/">
-        <div class="t">⬡ CyberShield AI Platform</div>
-        <div class="u">chintamanil.github.io/cybershield</div>
-        <div class="d">Multimodal multi-agent RAG cybersecurity platform with a LangGraph supervisor pattern.</div>
-      </a>
-    </div>
-  </div>
-</section>
 
-<header id="issues" class="part">
+<!-- PRODUCTION ISSUES -->
+<section id="issues">
   <div class="wrap">
-    <span class="role">Production Issues · Voice Intake Agent</span>
-    <h1 class="hero">THE BUGS THAT ONLY<br><span class="g">EXIST ON THE PHONE</span></h1>
-    <p class="lede">A voice agent taking precertification intake fails in ways no other software does: the transcript says one thing and the audio says another, and a dash read aloud becomes the digit two.</p>
-    <p class="lede">This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how it was found, and the configs that now hold the fixes in place.</p>
-    <div class="stats">
-      <div class="stat"><div class="n">4 layers</div><div class="l">STT · prompt · TTS · code — one symptom, four possible owners</div></div>
-      <div class="stat"><div class="n">6 stages</div><div class="l">Ordered TTS normalization transform — order itself caused bugs</div></div>
-      <div class="stat"><div class="n">3 dicts</div><div class="l">Alphabet · pronunciation · digit maps, versioned in config</div></div>
-      <div class="stat"><div class="n sm">$1.30 → $0.76</div><div class="l">AWS cost per intake call — priced from billed usage, with a costed path to &minus;42%</div></div>
+    <div class="seclabel rev">Production Issues &middot; Voice Intake Agent</div>
+    <h2 class="rev">The Bugs That Only Exist on the Phone</h2>
+    <p class="sub rev">A voice agent taking precertification intake fails in ways no other software does: the transcript says one thing and the audio says another, and a dash read aloud becomes the digit two. This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how it was found, and the configs that now hold the fixes in place.</p>
+    <div class="impact rev">
+      <div class="imp"><div class="big">4 layers</div><div class="d">STT &middot; prompt &middot; TTS &middot; code &mdash; one symptom, four possible owners</div></div>
+      <div class="imp"><div class="big">6 stages</div><div class="d">Ordered TTS normalization transform &mdash; order itself caused bugs</div></div>
+      <div class="imp"><div class="big">3 dicts</div><div class="d">Alphabet &middot; pronunciation &middot; digit maps, versioned in config</div></div>
+      <div class="imp"><div class="big">$1.30 &rarr; $0.76</div><div class="d">AWS cost per intake call &mdash; priced from billed usage, with a costed path to &minus;42%</div></div>
     </div>
     <div class="partnav rev"><a href="#attribution">Attribution</a><a href="#stt">STT</a><a href="#tts">TTS</a><a href="#dictionaries">Dictionaries</a><a href="#cost">Cost / Latency</a><a href="#tco">Priced Stack</a><a href="#framework">Build / Own</a></div>
   </div>
-</header>
+</section>
+
 <div class="deep">
 
 
@@ -2660,6 +2648,20 @@ flowchart LR
 
 </div>
 
+
+<section id="references">
+  <div class="wrap">
+    <div class="seclabel rev">More Work</div>
+    <h2 class="rev">Related Projects</h2>
+    <div class="refs rev">
+      <a class="ref" href="https://chintamanil.github.io/cybershield/">
+        <div class="t">⬡ CyberShield AI Platform</div>
+        <div class="u">chintamanil.github.io/cybershield</div>
+        <div class="d">Multimodal multi-agent RAG cybersecurity platform with a LangGraph supervisor pattern.</div>
+      </a>
+    </div>
+  </div>
+</section>
 
 <footer>
   <div class="wrap">
