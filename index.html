@@ -601,6 +601,10 @@
   .prog .cap{font-size:13px;color:var(--muted2);margin-top:12px}
   .imp .big.sm{font-size:20px;letter-spacing:0;line-height:1.25}
 header.part .lede{font-size:clamp(14.5px,1.6vw,17px);max-width:840px}
+.lede{max-width:1040px}
+.sub{max-width:1040px}
+.lst.lead{max-width:1040px}
+.callout p{max-width:1040px}
 </style>
 </head>
 <body id="top">
@@ -631,9 +635,14 @@ header.part .lede{font-size:clamp(14.5px,1.6vw,17px);max-width:840px}
   <div class="wrap">
     <span class="role">Architect · BenePower</span>
     <h1 class="hero">CONVERSATIONAL<br><span class="g">BENEFITS, BY AGENT</span></h1>
-    <p class="lede">I architected an <strong>AI-powered agentic platform</strong> that lets members and providers ask natural-language questions about their <strong>benefits, eligibility, and coverage</strong> — scaling the architecture from <strong>0 to 1.2M+ onboarded users</strong>.</p>
-    <p class="lede">A <strong>multimodal, multi-agent RAG</strong> system over text, image, and voice — real-time conversational AI on <strong>LiveKit WebRTC + AWS Transcribe</strong>, with agents orchestrated in <strong>LangChain, LangGraph, and LangSmith</strong> over <strong>OpenAI and AWS Bedrock</strong> and backed by Redis short-term memory. It's fronted by a HIPAA-compliant <strong>Django</strong> backend — an agent-driven support-ticketing system, a Bedrock-native RAG evaluation harness, and a <strong>Celery → Airflow</strong> data platform on AWS (RDS · Lambda · SNS · S3 · CDK) with a <strong>Vue + Vite</strong> frontend — all of which I owned end to end.</p>
-    <div class="stats">
+    <ul class="lst lead">
+      <li><strong>What:</strong> I architected an <strong>AI-powered agentic platform</strong> that lets members and providers ask natural-language questions about their <strong>benefits, eligibility, and coverage</strong>, scaled from 0 to <strong>1.2M+ onboarded users</strong>.</li>
+      <li><strong>Agents:</strong> <strong>multimodal, multi-agent RAG</strong> over text, image, and voice, real-time on <strong>LiveKit WebRTC + AWS Transcribe</strong>, orchestrated in <strong>LangChain, LangGraph, and LangSmith</strong> over <strong>OpenAI and AWS Bedrock</strong>, with Redis short-term memory.</li>
+      <li><strong>Backend:</strong> a HIPAA-compliant <strong>Django</strong> backend with an agent-driven support-ticketing system.</li>
+      <li><strong>Data and evaluation:</strong> a Bedrock-native RAG evaluation harness and a <strong>Celery &rarr; Airflow</strong> data platform on AWS (RDS &middot; Lambda &middot; SNS &middot; S3 &middot; CDK), with a <strong>Vue + Vite</strong> frontend.</li>
+      <li><strong>Ownership:</strong> all of it, end to end.</li>
+    </ul>
+        <div class="stats">
       <div class="stat"><div class="n" style="font-size:clamp(19px,2.5vw,27px)">0 → 1.2M+</div><div class="l">Onboarded users on the platform I architected, from zero</div><div class="l" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><strong style="color:var(--accent);font-family:var(--mono);letter-spacing:1px">HIPAA</strong> — compliant multi-tenant benefits backend (834 / 837p)</div></div>
       <div class="stat"><div class="n">≥90%</div><div class="l">Faithfulness gate on the RAG eval harness — with ≤2% hallucination</div><div class="l" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><strong style="color:var(--accent);font-family:var(--mono);letter-spacing:1px">3-LAYER · GATED</strong> — deterministic + RAGAS + phase checks block every unsafe deploy</div></div>
       <div class="stat"><div class="n" style="font-size:clamp(19px,2.5vw,27px)">~3.2M / mo</div><div class="l">Voice-agent API calls at 10k calls a month — ~321 per call to LLM, TTS, STT &amp; backend</div></div>
@@ -649,7 +658,12 @@ header.part .lede{font-size:clamp(14.5px,1.6vw,17px);max-width:840px}
   <div class="wrap">
     <div class="seclabel rev">System Design</div>
     <h2 class="rev">Architecture — Multimodal Multi-Agent RAG</h2>
-    <p class="sub rev">Members and providers reach the same brain through three doors — <strong>chat, image upload, and a live phone call</strong>. The phone path bridges <strong>Twilio → LiveKit SIP</strong>; a multi-tenant <strong>Operator dispatcher</strong> resolves the inbound number to the right partner and spawns a specialist agent, which grounds answers in a <strong>Bedrock knowledge base</strong>, captures structured state, and writes everything back to a HIPAA-compliant backend.</p>
+    <p class="sub rev" style="margin-bottom:16px">Members and providers reach the same brain through three doors: <strong>chat, image upload, and a live phone call</strong>.</p>
+    <ul class="lst lead rev">
+      <li><strong>Phone path:</strong> bridges <strong>Twilio &rarr; LiveKit SIP</strong>.</li>
+      <li><strong>Dispatch:</strong> a multi-tenant <strong>Operator dispatcher</strong> resolves the inbound number to the right partner and spawns a specialist agent.</li>
+      <li><strong>Specialist agent:</strong> grounds answers in a <strong>Bedrock knowledge base</strong>, captures structured state, and writes everything back to a HIPAA-compliant backend.</li>
+    </ul>
 
     <div class="cards c2 rev" style="margin-bottom:30px">
       <div class="card accent">
@@ -929,7 +943,12 @@ flowchart LR
   <div class="wrap">
     <div class="seclabel rev">Real-Time Voice</div>
     <h2 class="rev">A Voice Agent That Holds a Real Conversation</h2>
-    <p class="sub rev">The hardest channel is the phone. Inbound PSTN calls bridge <strong>Twilio → LiveKit SIP</strong>, where the agent <strong>(Sally)</strong> runs on <strong>AWS Transcribe</strong> for STT. <strong>The intake agent's TTS is stage-dependent</strong> — beta runs ElevenLabs, preprod and prod run <strong>AWS Polly generative</strong>, a divergence that hid a P0 speech defect from every environment developers actually test in (<a href="#tco">deep dive</a>). I designed the real-time layer so Sally <strong>verifies identity before disclosing anything</strong>, reads back member IDs one character at a time using a phonetic alphabet, survives barge-in and acknowledgements, and never falls into dead silence when a provider fails.</p>
+    <p class="sub rev" style="margin-bottom:16px">The hardest channel is the phone.</p>
+    <ul class="lst lead rev">
+      <li><strong>Path:</strong> inbound PSTN calls bridge <strong>Twilio &rarr; LiveKit SIP</strong>, where the agent <strong>(Sally)</strong> runs on <strong>AWS Transcribe</strong> for STT.</li>
+      <li><strong>TTS is stage-dependent for intake:</strong> beta runs ElevenLabs, preprod and prod run <strong>AWS Polly generative</strong>. That divergence hid a P0 speech defect from every environment developers actually test in (<a href="#tco">deep dive</a>).</li>
+      <li><strong>Real-time layer:</strong> Sally <strong>verifies identity before disclosing anything</strong>, reads back member IDs one character at a time with a phonetic alphabet, survives barge-in and acknowledgements, and never falls into dead silence when a provider fails.</li>
+    </ul>
 
     <div class="diagram rev">
       <div class="dhead"><span>benefits / precertification call · happy path</span><span class="tag">Twilio→LiveKit SIP · HIPAA-verified → grounded answer</span></div>
@@ -1114,7 +1133,11 @@ sequenceDiagram
   <div class="wrap">
     <div class="seclabel rev">Quality Gate &middot; Beta</div>
     <h2 class="rev">From Pass/Fail to IQ</h2>
-    <p class="sub rev">The six-gate eval answers &ldquo;is this build safe to ship?&rdquo; with pass or fail. The <strong>TruVo IQ score</strong> answers a harder question for the FDHN-powered agent: <strong>how much of what members actually ask can it resolve, plan by plan?</strong> It is expressed on the human IQ scale so the number is legible to a client, and it is explicitly a scoreboard &mdash; it exists to drive the next piece of work.</p>
+    <p class="sub rev" style="margin-bottom:16px">The six-gate eval answers &ldquo;is this build safe to ship?&rdquo; with pass or fail.</p>
+    <ul class="lst lead rev">
+      <li>The <strong>TruVo IQ score</strong> answers a harder question for the FDHN-powered agent: <strong>how much of what members actually ask can it resolve, plan by plan?</strong></li>
+      <li>It is expressed on the human IQ scale so the number reads at a glance, and it is a scoreboard: it exists to drive the next piece of work.</li>
+    </ul>
 
     <div class="formula rev">
       <div class="eq">IQ &nbsp;=&nbsp; round( 100 + ( <span class="den">RR</span> &minus; 0.80 ) &times; 150 )</div>
