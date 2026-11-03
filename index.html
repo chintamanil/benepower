@@ -743,7 +743,7 @@ flowchart TD
     </ul>
 
     <div class="diagram rev">
-      <div class="dhead"><span>online vs offline evaluation · how the pieces fit</span><span class="tag">online scoring + offline release gate</span></div>
+      <div class="dhead"><span>evaluation end to end · online scoring, offline release gate</span><span class="tag">S3 → EventBridge → MWAA</span></div>
       <div class="body">
 <div style="color:var(--accent);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin-bottom:6px">ONLINE · real calls, no answer key</div>
 <pre class="mermaid">
@@ -751,52 +751,31 @@ flowchart LR
   classDef on fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
   classDef rep fill:#0f2340,stroke:#1e4d8c,color:#ffffff
   classDef off fill:#2a2108,stroke:#f5a623,color:#fff5de
+  classDef trig fill:#1a1040,stroke:#4c3a9e,color:#fff
+  classDef out fill:#100e0a,stroke:#4a3a28,color:#fff
   CALL["Live call<br/>agent on LiveKit 1.8.9"]:::on --> REC["Per-call record<br/>summary, CSAT, confidence"]:::on --> PIPE["MWAA pipeline<br/>Sonnet 5.5, Opus 5.5 if unsure<br/>stores per-ticket objects"]:::on --> NB["Marimo reports<br/>internal metrics, customer KPIs"]:::rep
 </pre>
 <div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓ a bad number: add that call to the golden set (deploys feed new calls back to the top)</div>
-<div style="color:#f5a623;font-family:var(--mono);font-size:12px;letter-spacing:1px;margin-bottom:6px">OFFLINE · before release, with an answer key</div>
+<div style="color:#f5a623;font-family:var(--mono);font-size:12px;letter-spacing:1px;margin-bottom:6px">OFFLINE · before release, with an answer key (event-driven)</div>
 <pre class="mermaid">
 flowchart LR
   classDef on fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
   classDef rep fill:#0f2340,stroke:#1e4d8c,color:#ffffff
   classDef off fill:#2a2108,stroke:#f5a623,color:#fff5de
-  GOLD["Golden set<br/>plus scripted calls"]:::off --> QA["Reference-ticket<br/>QA harness<br/>baseline vs variant"]:::off --> RAG["RAGAS on Bedrock<br/>Haiku 5.5, Sonnet 5.5,<br/>Opus 5.5"]:::off --> GATE{"Quality gates<br/>pass: deploy<br/>fail: block"}:::off
-</pre>
-      </div>
-    </div>
-
-    <div class="diagram rev">
-      <div class="dhead"><span>event-driven eval pipeline · S3 → EventBridge → MWAA</span><span class="tag">offline benchmarking + quality gates</span></div>
-      <div class="body">
-<pre class="mermaid">
-flowchart LR
-  classDef src fill:#0f2340,stroke:#1e4d8c,color:#fff
   classDef trig fill:#1a1040,stroke:#4c3a9e,color:#fff
-  classDef step fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-  classDef gate fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
   classDef out fill:#100e0a,stroke:#4a3a28,color:#fff
-  T["Transcripts<br/>(agent calls / QA upload)"]:::src --> S3["S3 bucket"]:::src --> EB["EventBridge"]:::trig --> LMB["Lambda trigger"]:::trig
+  GOLD["Golden set + scripted calls<br/>reference-ticket QA harness<br/>baseline vs variant"]:::off --> S3["S3 bucket"]:::off --> EB["EventBridge"]:::trig --> LMB["Lambda trigger"]:::trig
 </pre>
 <div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓ triggers the DAG</div>
 <pre class="mermaid">
 flowchart LR
-  classDef src fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef on fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef rep fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef off fill:#2a2108,stroke:#f5a623,color:#fff5de
   classDef trig fill:#1a1040,stroke:#4c3a9e,color:#fff
-  classDef step fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-  classDef gate fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
   classDef out fill:#100e0a,stroke:#4a3a28,color:#fff
-  DAG["MWAA eval_sally DAG<br/>deterministic checks<br/>RAGAS via Bedrock Claude<br/>phase-level compliance"]:::step --> A["aggregate"]:::step --> G{"Quality<br/>Gates"}:::gate
+  DAG["MWAA eval_sally DAG<br/>deterministic checks<br/>RAGAS on Bedrock<br/>Haiku, Sonnet, Opus 5.5<br/>phase-level compliance"]:::on --> A["aggregate"]:::on --> G{"Quality gates<br/>pass: deploy<br/>fail: SNS alert + block"}:::off
   A --> M[("metrics history<br/>+ HTML dashboard")]:::out
-</pre>
-<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓ gate result</div>
-<pre class="mermaid">
-flowchart LR
-  classDef src fill:#0f2340,stroke:#1e4d8c,color:#fff
-  classDef trig fill:#1a1040,stroke:#4c3a9e,color:#fff
-  classDef step fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-  classDef gate fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
-  classDef out fill:#100e0a,stroke:#4a3a28,color:#fff
-  OK["PASS<br/>Safe to deploy"]:::step ~~~ SNS["FAIL<br/>SNS alert + block"]:::out
 </pre>
       </div>
     </div>
