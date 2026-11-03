@@ -723,7 +723,7 @@ flowchart TD
     <ul class="lst lead rev">
       <li><strong>Every call, today:</strong> creates a ticket with a summary and a structured JSON record built from the transcript (CSAT score, confidence and more).</li>
       <li><strong>Pipeline:</strong> an Airflow (MWAA) pipeline processes each record. When the first pass isn&rsquo;t confident, it re-runs the call with a stronger model (Sonnet 5.5, escalating to Opus 5.5) to build a detailed per-ticket object.</li>
-      <li><strong>Reporting:</strong> Marimo notebooks turn that data into internal metrics and the KPI reports customers see (<a href="#top" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-dim)">Customer Pulse ↗</a>).</li>
+      <li><strong>Reporting:</strong> Marimo notebooks turn that data into internal metrics and the KPI reports customers see (<a href="#systems" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-dim)">Customer Pulse ↗</a>).</li>
       <li><strong>Release gating:</strong> a 3-layer RAG evaluation harness on Bedrock + RAGAS scores a golden set and blocks deployment when a gate fails.</li>
       <li><strong>After the gate:</strong> a reference-ticket QA harness compares baseline and variant offline. Live per-call splits are planned (<a href="#ab" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-dim)">A/B testing ↗</a>).</li>
     </ul>
