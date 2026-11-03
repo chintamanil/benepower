@@ -1684,7 +1684,11 @@ flowchart LR
   <div class="wrap">
     <div class="seclabel rev">The Organizing Insight</div>
     <h2 class="rev">One Symptom, Four Different Owners</h2>
-    <p class="sub rev">Early triage was consistently wrong, and wrong in an expensive way — we kept tuning prompts for bugs that lived in the EDI builder. Every caller-visible failure arrives as the same sentence: <em>"Sally couldn't verify the member."</em> That sentence is compatible with at least four unrelated root causes in four different files owned by different people.</p>
+    <p class="sub rev" style="margin-bottom:16px">Early triage was consistently wrong, and wrong in an expensive way: we kept tuning prompts for bugs that lived in the EDI builder.</p>
+    <ul class="lst lead rev">
+      <li>Every caller-visible failure arrives as the same sentence: <em>&ldquo;Sally couldn&rsquo;t verify the member.&rdquo;</em></li>
+      <li>That sentence fits at least four unrelated root causes, in four different files owned by different people.</li>
+    </ul>
 
     <div class="mstrip rev">
       <div class="m"><span class="mv">1</span><span class="ml">Symptom sentence reported by callers</span></div>
@@ -1753,7 +1757,11 @@ flowchart TB
   <div class="wrap">
     <div class="seclabel rev">Layer 1 · Speech In</div>
     <h2 class="rev">STT — Speech Is a Search Key, Not a Data Source</h2>
-    <p class="sub rev">The instinct is to make transcription more accurate. That is mostly a losing battle on a phone line with a provider reading a chart. The winning move was to stop treating the transcript as <em>data</em> and start treating it as a <strong>lossy key into a database that already holds the correct value</strong> — then make every consumer of that key tolerant.</p>
+    <p class="sub rev" style="margin-bottom:16px">The instinct is to make transcription more accurate. That is mostly a losing battle on a phone line with a provider reading a chart.</p>
+    <ul class="lst lead rev">
+      <li>The winning move: stop treating the transcript as <em>data</em> and treat it as a <strong>lossy key into a database that already holds the correct value</strong>.</li>
+      <li>Then make every consumer of that key tolerant.</li>
+    </ul>
 
     <div class="cards c2 rev">
       <div class="card coral">
@@ -2154,8 +2162,13 @@ back caller-provided VALUES.</span></pre></div>
 <section id="dictionaries">
   <div class="wrap">
     <div class="seclabel rev">Where the Fixes Live</div>
-    <h2 class="rev">The Dictionaries — Config as Tenant Long-Term Memory</h2>
-    <p class="sub rev">Almost none of the above lives in code. It lives in a per-tenant <code>config.yaml</code> that is <strong>versioned, reviewable, and hot-swappable per call</strong>. That framing is the point: the pronunciation dictionary is not general knowledge, it is <em>this customer's vocabulary</em>, accumulated by listening to their calls. It belongs in config precisely because it is neither code nor prompt.</p>
+    <h2 class="rev">The Dictionaries — Config as Long-Term Memory</h2>
+    <p class="sub rev" style="margin-bottom:16px">Almost none of the above lives in code.</p>
+    <ul class="lst lead rev">
+      <li>It lives in a per-agent <code>config.yaml</code> that is <strong>versioned, reviewable, and hot-swappable per call</strong>.</li>
+      <li>The pronunciation dictionary is not general knowledge; it is <em>this platform&rsquo;s vocabulary</em>, accumulated by listening to calls.</li>
+      <li>It belongs in config precisely because it is neither code nor prompt.</li>
+    </ul>
 
     <div class="mstrip rev">
       <div class="m"><span class="mv">26</span><span class="ml">Letters in the customer's own alphabet</span></div>
@@ -2369,7 +2382,13 @@ flowchart LR
   <div class="wrap">
     <div class="seclabel rev">Priced Stack · STT · TTS · LLM</div>
     <h2 class="rev">What One Call Actually Costs, and What I Could Prove</h2>
-    <p class="sub rev">I opened this as a cost investigation: <em>why does one intake call cost $1.30?</em> It came back with three things I did not go looking for — a <strong>P0 caller-facing speech defect</strong>, an <strong>adversarial review that refuted four of my own ten core claims</strong>, and a cost plan whose second-largest modelled lever turned out to be worth <strong>zero</strong>. What shipped is the part that survived proof.</p>
+    <p class="sub rev" style="margin-bottom:16px">I opened this as a cost investigation: <em>why does one intake call cost $1.30?</em> It came back with three things I did not go looking for:</p>
+    <ul class="lst lead rev">
+      <li>A <strong>P0 caller-facing speech defect</strong>.</li>
+      <li>An <strong>adversarial review that refuted four of my own ten core claims</strong>.</li>
+      <li>A cost plan whose second-largest modelled lever turned out to be worth <strong>zero</strong>.</li>
+      <li>What shipped is the part that survived proof.</li>
+    </ul>
 
     <div class="mstrip rev">
       <div class="m"><span class="mv">$1.3024</span><span class="ml">Measured AWS cost per call — priced from billed usage</span></div>
