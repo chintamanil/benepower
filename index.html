@@ -614,8 +614,8 @@ header.part .lede{font-size:clamp(14.5px,1.6vw,17px);max-width:840px}
   <div class="navlinks">
     <a href="#architecture">Platform</a>
     <a href="#eval">RAG Eval</a>
-    <a href="#voice">Voice Agent</a>
     <a href="#systems">Eval Systems</a>
+    <a href="#voice">Voice Agent</a>
     <a href="#northstar">North Star</a>
     <a href="#iq">IQ Score</a>
     <a href="#ab">A/B</a>
@@ -624,9 +624,9 @@ header.part .lede{font-size:clamp(14.5px,1.6vw,17px);max-width:840px}
     <a href="#pipeline">HIPAA / X12</a>
     <a href="#integrity">Data Integrity</a>
     <a href="#metrics">Impact</a>
-    <a href="#next">What's Next</a>
     <a href="#ownership">Ownership</a>
     <a href="#deep-dives">Deep Dives</a>
+    <a href="#next">What's Next</a>
     <button type="button" id="toggleDeep" class="deepbtn">Expand all</button>
   </div>
 </nav>
@@ -1508,93 +1508,6 @@ flowchart LR
   </div>
 </section>
 
-<!-- WHAT'S NEXT -->
-<section id="next">
-  <div class="wrap">
-    <div class="seclabel rev">What's Next</div>
-    <h2 class="rev">What's Next: Voice Fixes, then a Knowledge Graph</h2>
-    <ul class="lst lead rev">
-      <li><strong>Near term:</strong> five ranked voice-agent improvements, each with how it would be built and the evidence that closes it.</li>
-      <li><strong>Longer term (FDHN, in beta):</strong> move plan answers from per-call retrieval to a persisted knowledge graph. <em>The LLM narrates. The graph decides.</em></li>
-    </ul>
-
-    <div class="seclabel rev" style="margin-top:34px">Near term &middot; voice agent</div>
-    <div class="tbl rev">
-      <table>
-        <thead><tr><th>#</th><th>Improvement</th><th>How</th><th>Proof it worked</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td><strong>Digit pacing on Polly&rsquo;s generative voice</strong></td><td class="v">Blind listening trial: SSML breaks, &ldquo;triple zero&rdquo; collapse, both.</td><td class="v">Higher read-back accuracy; request log confirms <code>TextType=ssml</code></td></tr>
-          <tr><td>2</td><td><strong>Prompt caching on every agent</strong></td><td class="v">Configs inherit the cache flags from the template; one-shot calls stay uncached.</td><td class="v"><code>cacheReadInputTokens &gt; 0</code> from turn two, reconciled with the Bedrock bill</td></tr>
-          <tr><td>3</td><td><strong>Measure turn-taking first</strong></td><td class="v">Staging A/B with synthetic callers: fixed vs dynamic endpointing, VAD vs adaptive interruption.</td><td class="v">Fewer false interruptions and missed barge-ins per call</td></tr>
-          <tr><td>4</td><td><strong>Grow the reference-ticket call harness</strong></td><td class="v">Replay preprod scenarios, record audio, add flow tests for the other agents.</td><td class="v">PASS/FAIL report plus a recording</td></tr>
-          <tr><td>5</td><td><strong>Cheaper tier for post-call summaries</strong></td><td class="v">Route the three summary calls to a smaller model.</td><td class="v">Lower cost per call, no drop in summary quality</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="seclabel rev" style="margin-top:34px">Longer term &middot; FDHN, in beta</div>
-    <p class="sub rev">Today each agent grounds an answer by retrieving document passages at call time. <strong>FDHN</strong> (the engine behind the <strong>TruVo</strong> agent) is a streamed query service over a <strong>Neptune + OpenSearch lexical graph</strong>. The design target is a <strong>persisted domain graph</strong> built once at onboarding, so the agent reads decided facts (coverage, cost share, which document takes precedence) instead of re-deriving them on every call.</p>
-
-    <div class="diagram rev">
-      <div class="dhead"><span>FDHN &middot; LLM &rarr; Graph &rarr; LLM</span><span class="tag">beta now &middot; design target dashed</span></div>
-      <div class="body">
-<div style="color:var(--accent);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:4px 0 6px">IN BETA · QUERY TIME</div>
-<pre class="mermaid">
-flowchart LR
-  classDef off fill:#0f2340,stroke:#1e4d8c,color:#ffffff
-  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-  classDef out fill:#1a1040,stroke:#4c3a9e,color:#ffffff
-  classDef plan fill:#2a2108,stroke:#f5a623,color:#fff5de,stroke-dasharray:5 4
-  Q["Member question"]:::out --> SVC["FDHN query service<br/>FastAPI on Fargate, streamed NDJSON"]:::core --> RET[("OpenSearch lexical graph<br/>+ Neptune navigation facts")]:::core --> FACTS["Grounded facts<br/>with citations"]:::core
-</pre>
-<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓</div>
-<pre class="mermaid">
-flowchart LR
-  classDef off fill:#0f2340,stroke:#1e4d8c,color:#ffffff
-  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-  classDef out fill:#1a1040,stroke:#4c3a9e,color:#ffffff
-  classDef plan fill:#2a2108,stroke:#f5a623,color:#fff5de,stroke-dasharray:5 4
-  NARR["LLM narration<br/>Bedrock Claude"]:::out --> ANS["Answer with sources<br/>streamed to the agent"]:::out
-</pre>
-<div style="color:#f5a623;font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:4px 0 6px">DESIGN TARGET · ONBOARDING TIME (dashed)</div>
-<pre class="mermaid">
-flowchart LR
-  classDef off fill:#0f2340,stroke:#1e4d8c,color:#ffffff
-  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
-  classDef out fill:#1a1040,stroke:#4c3a9e,color:#ffffff
-  classDef plan fill:#2a2108,stroke:#f5a623,color:#fff5de,stroke-dasharray:5 4
-  DOCS["Plan documents<br/>SPD, SOB, SBC, amendments"]:::off --> EXT["LLM extraction<br/>once per document"]:::plan --> DG[("Persisted domain graph<br/>with document precedence")]:::plan
-</pre>
-      </div>
-    </div>
-
-    <div class="cards c3 rev">
-      <div class="card accent"><div class="k">L &middot; Precomputed</div><h3>Understand the plan once</h3><p>An LLM reads the plan documents offline and extracts propositions, entities and fulfillment structure. The cost and the variability are paid at onboarding, not on every call.</p></div>
-      <div class="card accent"><div class="k">G &middot; Persisted</div><h3>The graph decides</h3><p>In beta, the service answers from a lexical graph plus graph-derived navigation facts (cost-sharing, steerage, pre-cert). The onboarding-time domain graph with document precedence is the design target.</p></div>
-      <div class="card accent"><div class="k">L &middot; Last-mile</div><h3>The LLM narrates</h3><p>The model verbalizes graph-derived facts in the voice of the audience &mdash; plain-language for members, concise for providers &mdash; streamed with citations.</p></div>
-    </div>
-
-    <details class="deep"><summary>Beta stack and how it joins this platform &middot; detail</summary><div class="deepbody"><div class="cards c2 rev" style="margin-top:22px">
-      <div class="card">
-        <div class="k">Beta stack</div>
-        <ul class="lst">
-          <li>Neptune Serverless domain graph + OpenSearch Serverless lexical graph</li>
-          <li>FastAPI query service on ECS Fargate behind an ALB with WAF, streaming NDJSON</li>
-          <li>Bedrock Claude for expansion and narration</li>
-          <li>Graph builds, lexical indexing and glossary sync as Airflow DAGs on MWAA</li>
-        </ul>
-      </div>
-      <div class="card">
-        <div class="k">How it joins the rest of this platform</div>
-        <ul class="lst">
-          <li>The voice and chat agents become thin clients: dispatch, verification and speech stay here; plan answers come from the graph</li>
-          <li>Quality is scored per plan option with the <a href="#iq">TruVo IQ score</a>, designed to gate release: Competent (IQ 100+) on every plan option</li>
-          <li>The voice-agent follow-ups above stay on this side of the line</li>
-        </ul>
-      </div>
-    </div></div></details>
-  </div>
-</section>
 <!-- OWNERSHIP -->
 <section id="ownership">
   <div class="wrap">
@@ -2688,6 +2601,93 @@ flowchart LR
 </div>
 
 
+<!-- WHAT'S NEXT -->
+<section id="next">
+  <div class="wrap">
+    <div class="seclabel rev">What's Next</div>
+    <h2 class="rev">What's Next: Voice Fixes, then a Knowledge Graph</h2>
+    <ul class="lst lead rev">
+      <li><strong>Near term:</strong> five ranked voice-agent improvements, each with how it would be built and the evidence that closes it.</li>
+      <li><strong>Longer term (FDHN, in beta):</strong> move plan answers from per-call retrieval to a persisted knowledge graph. <em>The LLM narrates. The graph decides.</em></li>
+    </ul>
+
+    <div class="seclabel rev" style="margin-top:34px">Near term &middot; voice agent</div>
+    <div class="tbl rev">
+      <table>
+        <thead><tr><th>#</th><th>Improvement</th><th>How</th><th>Proof it worked</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Digit pacing on Polly&rsquo;s generative voice</strong></td><td class="v">Blind listening trial: SSML breaks, &ldquo;triple zero&rdquo; collapse, both.</td><td class="v">Higher read-back accuracy; request log confirms <code>TextType=ssml</code></td></tr>
+          <tr><td>2</td><td><strong>Prompt caching on every agent</strong></td><td class="v">Configs inherit the cache flags from the template; one-shot calls stay uncached.</td><td class="v"><code>cacheReadInputTokens &gt; 0</code> from turn two, reconciled with the Bedrock bill</td></tr>
+          <tr><td>3</td><td><strong>Measure turn-taking first</strong></td><td class="v">Staging A/B with synthetic callers: fixed vs dynamic endpointing, VAD vs adaptive interruption.</td><td class="v">Fewer false interruptions and missed barge-ins per call</td></tr>
+          <tr><td>4</td><td><strong>Grow the reference-ticket call harness</strong></td><td class="v">Replay preprod scenarios, record audio, add flow tests for the other agents.</td><td class="v">PASS/FAIL report plus a recording</td></tr>
+          <tr><td>5</td><td><strong>Cheaper tier for post-call summaries</strong></td><td class="v">Route the three summary calls to a smaller model.</td><td class="v">Lower cost per call, no drop in summary quality</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="seclabel rev" style="margin-top:34px">Longer term &middot; FDHN, in beta</div>
+    <p class="sub rev">Today each agent grounds an answer by retrieving document passages at call time. <strong>FDHN</strong> (the engine behind the <strong>TruVo</strong> agent) is a streamed query service over a <strong>Neptune + OpenSearch lexical graph</strong>. The design target is a <strong>persisted domain graph</strong> built once at onboarding, so the agent reads decided facts (coverage, cost share, which document takes precedence) instead of re-deriving them on every call.</p>
+
+    <div class="diagram rev">
+      <div class="dhead"><span>FDHN &middot; LLM &rarr; Graph &rarr; LLM</span><span class="tag">beta now &middot; design target dashed</span></div>
+      <div class="body">
+<div style="color:var(--accent);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:4px 0 6px">IN BETA · QUERY TIME</div>
+<pre class="mermaid">
+flowchart LR
+  classDef off fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef out fill:#1a1040,stroke:#4c3a9e,color:#ffffff
+  classDef plan fill:#2a2108,stroke:#f5a623,color:#fff5de,stroke-dasharray:5 4
+  Q["Member question"]:::out --> SVC["FDHN query service<br/>FastAPI on Fargate, streamed NDJSON"]:::core --> RET[("OpenSearch lexical graph<br/>+ Neptune navigation facts")]:::core --> FACTS["Grounded facts<br/>with citations"]:::core
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓</div>
+<pre class="mermaid">
+flowchart LR
+  classDef off fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef out fill:#1a1040,stroke:#4c3a9e,color:#ffffff
+  classDef plan fill:#2a2108,stroke:#f5a623,color:#fff5de,stroke-dasharray:5 4
+  NARR["LLM narration<br/>Bedrock Claude"]:::out --> ANS["Answer with sources<br/>streamed to the agent"]:::out
+</pre>
+<div style="color:#f5a623;font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:4px 0 6px">DESIGN TARGET · ONBOARDING TIME (dashed)</div>
+<pre class="mermaid">
+flowchart LR
+  classDef off fill:#0f2340,stroke:#1e4d8c,color:#ffffff
+  classDef core fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef out fill:#1a1040,stroke:#4c3a9e,color:#ffffff
+  classDef plan fill:#2a2108,stroke:#f5a623,color:#fff5de,stroke-dasharray:5 4
+  DOCS["Plan documents<br/>SPD, SOB, SBC, amendments"]:::off --> EXT["LLM extraction<br/>once per document"]:::plan --> DG[("Persisted domain graph<br/>with document precedence")]:::plan
+</pre>
+      </div>
+    </div>
+
+    <div class="cards c3 rev">
+      <div class="card accent"><div class="k">L &middot; Precomputed</div><h3>Understand the plan once</h3><p>An LLM reads the plan documents offline and extracts propositions, entities and fulfillment structure. The cost and the variability are paid at onboarding, not on every call.</p></div>
+      <div class="card accent"><div class="k">G &middot; Persisted</div><h3>The graph decides</h3><p>In beta, the service answers from a lexical graph plus graph-derived navigation facts (cost-sharing, steerage, pre-cert). The onboarding-time domain graph with document precedence is the design target.</p></div>
+      <div class="card accent"><div class="k">L &middot; Last-mile</div><h3>The LLM narrates</h3><p>The model verbalizes graph-derived facts in the voice of the audience &mdash; plain-language for members, concise for providers &mdash; streamed with citations.</p></div>
+    </div>
+
+    <details class="deep"><summary>Beta stack and how it joins this platform &middot; detail</summary><div class="deepbody"><div class="cards c2 rev" style="margin-top:22px">
+      <div class="card">
+        <div class="k">Beta stack</div>
+        <ul class="lst">
+          <li>Neptune Serverless domain graph + OpenSearch Serverless lexical graph</li>
+          <li>FastAPI query service on ECS Fargate behind an ALB with WAF, streaming NDJSON</li>
+          <li>Bedrock Claude for expansion and narration</li>
+          <li>Graph builds, lexical indexing and glossary sync as Airflow DAGs on MWAA</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="k">How it joins the rest of this platform</div>
+        <ul class="lst">
+          <li>The voice and chat agents become thin clients: dispatch, verification and speech stay here; plan answers come from the graph</li>
+          <li>Quality is scored per plan option with the <a href="#iq">TruVo IQ score</a>, designed to gate release: Competent (IQ 100+) on every plan option</li>
+          <li>The voice-agent follow-ups above stay on this side of the line</li>
+        </ul>
+      </div>
+    </div></div></details>
+  </div>
+</section>
 <section id="references">
   <div class="wrap">
     <div class="seclabel rev">More Work</div>
