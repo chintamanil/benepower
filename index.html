@@ -1182,95 +1182,73 @@ flowchart LR
   <div class="wrap">
     <div class="seclabel rev">Experimentation</div>
     <h2 class="rev">Did the Change Actually Help?</h2>
-    <p class="sub rev">The two evaluation systems answer <strong>"is it safe to ship?"</strong> and <strong>"did it finish the job?"</strong>. Neither answers the question every prompt, model or voice change raises: <strong>"is this version better than the last one?"</strong> Before the reference-ticket harness, a change was judged by the next nightly eval run — every prompt iteration was a leap of faith. Now each change is a controlled comparison with its sample size decided up front: the offline stage runs today, and the live 50/50 split follows per-call variant binding.</p>
+    <p class="sub rev" style="margin-bottom:16px">Passing the release gate and finishing the job don&rsquo;t answer the question every prompt, model or voice change raises: <strong>is this version better than the last one?</strong></p>
+    <ul class="lst lead rev">
+      <li><strong>Before:</strong> a change was judged by the next nightly eval run.</li>
+      <li><strong>Now:</strong> each change is a controlled comparison, with its sample size decided up front.</li>
+      <li><strong>Stage 1, offline (runs today):</strong> the reference-ticket harness replays a real call against the baseline and the variant. No live traffic.</li>
+      <li><strong>Stage 2, live (planned):</strong> a 50/50 split by call, only for how the agent sounds and paces.</li>
+    </ul>
 
-        <div class="diagram rev">
+    <div class="diagram rev">
       <div class="dhead"><span>change &rarr; offline &rarr; live</span><span class="tag">anything that changes the 278 never gets a live split</span></div>
       <div class="body">
 <pre class="mermaid">
-flowchart TB
+flowchart LR
   classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
   classDef io fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
   classDef hot fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
-
-  subgraph ROW1[" "]
-    direction LR
-    C["Change<br/>prompt, model, upgrade"]:::s --> QA["Stage 1 offline: QA caller<br/>same scripted scenarios"]:::s
-    C --> HR["Stage 1 offline: reference-ticket harness<br/>baseline vs variant"]:::s
-    QA --> SC["Score: deterministic + RAGAS + judge<br/>no patient traffic"]:::s
-    HR --> SC
-  end
-  subgraph ROW2[" "]
-    direction LR
-    W{"Wins offline?"}:::hot -->|"no"| STOP["Stop"]:::hot
-    W -->|"yes, or caller-experience knob"| L["Stage 2 · live 50/50<br/>hash(call_id)"]:::io
-    L --> GR["Guardrails<br/>transfer rate, hang-up auto-stop"]:::hot
-  end
-  ROW1 --> ROW2
-  style ROW1 fill:none,stroke:none
-  style ROW2 fill:none,stroke:none
+  C["Change<br/>prompt, model, upgrade"]:::s --> HR["Stage 1 offline<br/>reference-ticket harness<br/>baseline vs variant"]:::s --> SC["Score<br/>deterministic + RAGAS + judge"]:::s --> W{"Wins offline?"}:::hot
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">&darr; yes, or a caller-experience knob (otherwise stop)</div>
+<pre class="mermaid">
+flowchart LR
+  classDef s fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef io fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef hot fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  L["Stage 2 · live 50/50<br/>hash(call_id)"]:::io --> GR["Guardrails<br/>transfer rate, hang-up auto-stop"]:::hot
 </pre>
       </div>
     </div>
 
     <div class="impact rev">
       <div class="imp"><div class="big">167 / day</div><div class="d">Calls per arm on a 50/50 split at 333 calls a day</div></div>
-      <div class="imp"><div class="big">~6 days</div><div class="d">To detect a 5-point drop (20% → 15%) — 906 calls per arm, α 0.05, 80% power</div></div>
-      <div class="imp"><div class="big">~37 days</div><div class="d">To detect a 2-point drop (20% → 18%) — 6,039 calls per arm, so small effects go offline first</div></div>
-      <div class="imp"><div class="big">0 new infra</div><div class="d">Variant rides on existing telemetry — call usage record, intake record, SupportTicket</div></div>
+      <div class="imp"><div class="big">~6 days</div><div class="d">To detect a 5-point drop (20% &rarr; 15%) &mdash; 906 calls per arm, &alpha; 0.05, 80% power</div></div>
+      <div class="imp"><div class="big">~37 days</div><div class="d">To detect a 2-point drop (20% &rarr; 18%) &mdash; 6,039 calls per arm, so small effects go offline first</div></div>
     </div>
 
     <div class="tbl rev">
       <table>
         <thead><tr><th>What gets tested</th><th>Success metric</th><th>How</th></tr></thead>
         <tbody>
-          <tr><td>Intake system prompt v1 → v2</td><td class="v">North Star · required fields captured · intake completion</td><td class="v">Offline paired → live split</td></tr>
-          <tr><td>LLM model (Sonnet 5.5 → newer) · RAG model</td><td class="v">Eval score · TTFT · <code>cost_usd</code> per call</td><td class="v">Paired offline on identical scenarios</td></tr>
-          <tr><td>TTS provider &amp; voice</td><td class="v">Caller repeat requests · hang-ups · digit read-back</td><td class="v">Live, per call</td></tr>
-          <tr><td>Endpointing delay · VAD threshold</td><td class="v">Agent barge-in · dead air · call duration</td><td class="v">Live, per call</td></tr>
-          <tr><td>NPI provider-name match rules</td><td class="v">Verified-match rate · downstream corrections</td><td class="v"><strong>Offline only</strong> — replayed name captures</td></tr>
-          <tr><td>Library or platform upgrade · prompt change (whole-call regression)</td><td class="v">Every ticket fact and field, closing line, spoken reference number · no agent error</td><td class="v">Offline paired — one caller script, baseline vs variant</td></tr>
-          <tr><td>Escalation &amp; warm-transfer thresholds</td><td class="v">Transfer-to-human rate · repeat calls</td><td class="v">Live, with guardrail auto-stop</td></tr>
-          <tr><td>Member chat prompt · knowledge-base on/off</td><td class="v"><code>thumbs_up_down</code> · flag rate</td><td class="v">Live, per session</td></tr>
+          <tr><td>Intake system prompt v1 &rarr; v2</td><td class="v">North Star &middot; required fields captured</td><td class="v">Offline paired &rarr; live split</td></tr>
+          <tr><td>LLM model &middot; RAG model</td><td class="v">Eval score &middot; TTFT &middot; <code>cost_usd</code> per call</td><td class="v">Paired offline</td></tr>
+          <tr><td>TTS voice &middot; endpointing &middot; VAD</td><td class="v">Repeat requests &middot; hang-ups &middot; dead air</td><td class="v">Live, per call</td></tr>
+          <tr><td>Name-match rules</td><td class="v">Verified-match rate</td><td class="v"><strong>Offline only</strong></td></tr>
+          <tr><td>Library or platform upgrade</td><td class="v">Every ticket field, closing line, reference number</td><td class="v">Offline paired</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="cards c2 rev topalign">
       <div class="card accent">
-        <div class="k">Design · Assignment</div>
-        <h3>Per-call hashing, not per-tenant splits</h3>
-        <p>Each call is assigned at <strong>OperatorAgent dispatch</strong> by hashing the call ID <strong>within its tenant</strong>. Splitting whole customers into arms would compare contracts and caller populations, not variants — and there are too few tenants to power it.</p>
+        <div class="k">Design &middot; Assignment</div>
+        <h3>Per-call hashing</h3>
+        <p>Each call is assigned at dispatch by hashing the call ID, so the two arms see comparable callers.</p>
         <div class="mrows">
-          <div class="mrow"><span class="mk">Bucketing key</span><span class="mv">hash(call_id) within org</span></div>
-          <div class="mrow"><span class="mk">Variant defined in</span><span class="mv">dispatch.yaml · GroupAIConfig</span></div>
-          <div class="mrow"><span class="mk"><code>variant_id</code> stamped on</span><span class="mv">usage record · intake · ticket</span></div>
-        </div>
-        <div class="tie"><b>Tied back to</b>The same per-call usage record and ticket lifecycle that feed the <a href="#northstar">North Star</a> — so every experiment is readable on the dashboard the client already uses.</div>
-      </div>
-      <div class="card accent">
-        <div class="k">Design · Two stages</div>
-        <h3>Offline first, then live</h3>
-        <p><strong>Stage 1</strong> — the QA caller agent dials both variants with the <strong>same scripted scenarios</strong>. Paired comparison, no patient traffic, and it resolves effects far smaller than live volume can. A second offline driver, run on beta, scripts an AI caller from a real reference ticket and checks the whole call. <strong>Stage 2</strong> — a live split, only for changes that won offline or are caller-experience knobs with no clinical output.</p>
-        <div class="mrows">
-          <div class="mrow"><span class="mk">Offline driver</span><span class="mv">qa_caller_agent.py</span></div>
-          <div class="mrow"><span class="mk">Whole-call regression driver (beta)</span><span class="mv">reference-ticket harness</span></div>
-          <div class="mrow"><span class="mk">Offline scoring</span><span class="mv">deterministic + RAGAS + judge</span></div>
-          <div class="mrow"><span class="mk">Live guardrails</span><span class="mv">transfer · hang-up auto-stop</span></div>
+          <div class="mrow"><span class="mk">Bucketing key</span><span class="mv">hash(call_id)</span></div>
+          <div class="mrow"><span class="mk"><code>variant_id</code> stamped on</span><span class="mv">usage record &middot; intake &middot; ticket</span></div>
         </div>
       </div>
       <div class="card amber">
-        <div class="k">Prerequisite · per-call config</div>
+        <div class="k">Next step &middot; per-call config</div>
         <h3>Config is isolated per call</h3>
-        <p>Each call runs in its own OS process, and the loader resets and reloads the partner config at dispatch, so two concurrent calls never share a config today. Per-call variants need more than that: the variant has to travel with the call. The next step is to bind the resolved config into the call's <code>userdata</code> at dispatch, which makes a variant a property of the call and not of the process.</p>
-      </div>
-      <div class="card accent">
-        <p>The reference-ticket harness compares the resulting ticket and the spoken reference number with the original, and can run a baseline checkout and the new build against the same caller. It handles one call at a time and the caller is not deterministic, so it is a whole-call regression check, not the source of the sample sizes above. Used on the LiveKit 1.3.6 &rarr; 1.8.9 upgrade, the same caller against both builds showed a ticket reference number read with an extra digit on the old build too, so the upgrade was ruled out as the cause.</p>
+        <p>Each call runs in its own process. Next: bind the resolved config into the call&rsquo;s <code>userdata</code> at dispatch, so a variant travels with the call.</p>
       </div>
     </div>
 
-        <div class="callout rev">
-      <p><strong>The rule: anything that changes the 278 output never gets a live 50/50.</strong> NPI matching, date validation and code capture must win offline before a single real call sees them. Live splits are reserved for how Sally <em>sounds</em> and <em>paces</em> — never for what she <em>submits</em>.</p>
+    <div class="callout rev">
+      <p><strong>The rule: anything that changes the 278 output never gets a live 50/50.</strong> Live splits are reserved for how Sally <em>sounds</em> and <em>paces</em> &mdash; never for what she <em>submits</em>.</p>
     </div>
   </div>
 </section>
