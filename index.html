@@ -847,6 +847,10 @@ flowchart LR
     </div>
 
     <p class="sub rev" style="margin-top:22px;font-size:14px;color:var(--muted2)"><strong style="color:var(--amber)">Version note:</strong> these v1/v2/v3 numbers belong to the <strong>RAG eval harness</strong> — the offline, golden-set gate. Customer Pulse has its own separate v2 (a tiered LLM-as-judge on production calls); the two share the Bedrock substrate but <a href="#systems" style="color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-dim)">no metric appears in both</a>.</p>
+    <ul class="lst lead rev" style="margin-top:12px;font-size:14px">
+      <li><strong>Customer Pulse v2, still open:</strong> live proof of the judge output, tuning the escalation threshold against the human-labeled set, per-ticket cost capture, and four learnings metrics (<code>hangup_reason</code>, <code>hipaa_issue</code>, <code>why_no_278</code>, <code>learning_frequency</code>).</li>
+      <li><strong>Customer Pulse v3, planned:</strong> raw-audio word error rate and TTS opinion score, tone and empathy scoring, and real-time evaluation on production calls with live A/B splits.</li>
+    </ul>
 
     <p class="sub rev" style="margin-top:18px">Why RAGAS + Bedrock over DeepEval, TruLens, or Phoenix: RAGAS brings battle-tested judge templates and <strong>agent/tool metrics</strong> with a swappable LLM backend, while Bedrock keeps the whole thing <strong>HIPAA-eligible</strong> — PHI never leaves the account.</p>
 
@@ -1643,15 +1647,21 @@ flowchart LR
 <section id="deep-dives">
   <div class="wrap">
     <div class="seclabel rev">Deep Dives &middot; Voice Intake Agent</div>
-    <h2 class="rev">The Bugs That Only Exist on the Phone</h2>
-    <p class="sub rev">A voice agent taking precertification intake fails in ways no other software does: the transcript says one thing and the audio says another, and a dash read aloud becomes the digit two. This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how it was found, and the configs that now hold the fixes in place.</p>
+    <h2 class="rev">What Building a Voice Agent Taught Us</h2>
+    <p class="sub rev" style="margin-bottom:16px">A voice agent taking precertification intake fails in ways no other software does: the transcript says one thing and the audio says another, and a dash read aloud becomes the digit two. These are the deep dives behind the production agent:</p>
+    <ul class="lst lead rev">
+      <li><strong>Bugs:</strong> what broke, and which <strong>layer</strong> it actually broke in.</li>
+      <li><strong>Speech:</strong> STT and TTS behavior, and the dictionaries that fix pronunciation.</li>
+      <li><strong>Cost:</strong> what was measured, what shipped, and what the numbers refuted.</li>
+      <li><strong>Process:</strong> how issues are triaged, and the configs that now hold the fixes in place.</li>
+    </ul>
     <div class="impact rev">
       <div class="imp"><div class="big">4 layers</div><div class="d">STT &middot; prompt &middot; TTS &middot; code &mdash; one symptom, four possible owners</div></div>
       <div class="imp"><div class="big">6 stages</div><div class="d">Ordered TTS normalization transform &mdash; order itself caused bugs</div></div>
       <div class="imp"><div class="big">3 dicts</div><div class="d">Alphabet &middot; pronunciation &middot; digit maps, versioned in config</div></div>
       <div class="imp"><div class="big">$1.30 &rarr; $0.76</div><div class="d">AWS cost per intake call &mdash; priced from billed usage, with a costed path to &minus;42%</div></div>
     </div>
-    <div class="partnav rev"><a href="#attribution">Attribution</a><a href="#stt">STT</a><a href="#tts">TTS</a><a href="#dictionaries">Dictionaries</a><a href="#cost">Cost / Latency</a><a href="#tco">Priced Stack</a><a href="#framework">Build / Own</a></div>
+    <div class="partnav rev"><a href="#attribution">Attribution</a><a href="#stt">STT</a><a href="#tts">TTS</a><a href="#dictionaries">Dictionaries</a><a href="#cost">Cost / Latency</a><a href="#tco">Cost Investigation</a><a href="#framework">How We Decide</a></div>
   </div>
 </section>
 
@@ -1710,20 +1720,26 @@ flowchart LR
     <div class="diagram rev">
       <div class="dhead"><span>triage decision tree · asked before any code is read</span><span class="tag">routes to owner in one step</span></div>
       <div class="body">
+<div style="color:var(--accent);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin-bottom:6px">QUESTION 1 · is the correct value in the transcript?</div>
 <pre class="mermaid">
-flowchart TB
+flowchart LR
   classDef q fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
   classDef stt fill:#0b2340,stroke:#4c8cff,color:#dbe8ff,stroke-width:2px
   classDef tts fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
   classDef code fill:#241608,stroke:#f5a623,color:#ffe6b3
   classDef pr fill:#2a0a10,stroke:#ff7a8a,color:#ffd7dd
-
-  Q{"Is the correct value<br/>in the transcript?"}:::q
-  Q -->|"NO — value never arrived"| A["STT or prompt-elicitation defect<br/>resilient STT · VAD/endpointing · input-length prompt"]:::stt
-  Q -->|"YES — value arrived intact"| B{"Where did it go wrong?"}:::q
-  B -->|"wrong on the phone"| C["TTS defect<br/>normalize_for_tts"]:::tts
-  B -->|"wrong in the 278"| D["Builder defect<br/>intake_handoff"]:::code
-  B -->|"re-asked or skipped"| E["Prompt state-machine defect"]:::pr
+  Q{"Is the correct value<br/>in the transcript?"}:::q -->|"NO — value never arrived"| A["Owner: STT or prompt-elicitation<br/>resilient STT · VAD/endpointing<br/>input-length prompt"]:::stt
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓ YES — value arrived intact. Where did it go wrong?</div>
+<div style="color:var(--accent);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin-bottom:6px">QUESTION 2 · symptom → owner</div>
+<pre class="mermaid">
+flowchart LR
+  classDef q fill:#241608,stroke:#f5a623,color:#ffe6b3,stroke-width:2px
+  classDef stt fill:#0b2340,stroke:#4c8cff,color:#dbe8ff,stroke-width:2px
+  classDef tts fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef code fill:#241608,stroke:#f5a623,color:#ffe6b3
+  classDef pr fill:#2a0a10,stroke:#ff7a8a,color:#ffd7dd
+  C["wrong on the phone<br/>Owner: TTS defect<br/>normalize_for_tts"]:::tts ~~~ D["wrong in the 278<br/>Owner: builder defect<br/>intake_handoff"]:::code ~~~ E["re-asked or skipped<br/>Owner: prompt<br/>state-machine defect"]:::pr
 </pre>
       </div>
     </div>
@@ -2172,15 +2188,23 @@ flowchart LR
   classDef root fill:#0f2340,stroke:#1e4d8c,color:#fff
   classDef dict fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
   classDef other fill:#1a1040,stroke:#4c3a9e,color:#e6dcff
-
   C["config.yaml"]:::root --> N["tts.normalization"]:::root
-  N --> P["pronunciations<br/>domain lexicon"]:::dict
-  N --> D["digit_map<br/>0-9 to words"]:::dict
-  N --> A["alphabet_map<br/>26 letters, customer's own"]:::dict
-  C --> T["vad · barge_in<br/>min_endpointing_delay"]:::other
-  C --> S["system_prompt<br/>the state machine"]:::other
-  C --> R["transfer_routing<br/>skill queues by DTMF"]:::other
-  C --> O["overrides<br/>local · beta · preprod"]:::other
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓ tts.normalization holds three dictionaries</div>
+<pre class="mermaid">
+flowchart LR
+  classDef root fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef dict fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef other fill:#1a1040,stroke:#4c3a9e,color:#e6dcff
+  P["pronunciations<br/>domain lexicon"]:::dict ~~~ D["digit_map<br/>0-9 to words"]:::dict ~~~ A["alphabet_map<br/>26 letters, customer's own"]:::dict
+</pre>
+<div style="text-align:center;color:var(--muted2);font-family:var(--mono);font-size:12px;letter-spacing:1px;margin:6px 0">↓ the rest of config.yaml</div>
+<pre class="mermaid">
+flowchart LR
+  classDef root fill:#0f2340,stroke:#1e4d8c,color:#fff
+  classDef dict fill:#053a22,stroke:#00e5a0,color:#eafff7,stroke-width:2px
+  classDef other fill:#1a1040,stroke:#4c3a9e,color:#e6dcff
+  T["vad · barge_in<br/>min_endpointing_delay"]:::other ~~~ S["system_prompt<br/>the state machine"]:::other ~~~ R["transfer_routing<br/>skill queues by DTMF"]:::other ~~~ O["overrides<br/>local · beta · preprod"]:::other
 </pre>
       </div>
     </div>
@@ -2283,7 +2307,8 @@ EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
       </ul>
     </div>
 
-    <p>The economics are lopsided enough to make this the single highest-leverage change: a cache read bills at <strong>a tenth</strong> of a standard input token, against a one-time write premium of 1.25×. The break-even is roughly two turns — every real call clears it long before the caller finishes spelling their member ID.</p>
+    <details class="deep"><summary>Why caching pays · the four segments</summary><div class="deepbody">
+<p>The economics are lopsided enough to make this the single highest-leverage change: a cache read bills at <strong>a tenth</strong> of a standard input token, against a one-time write premium of 1.25×. The break-even is roughly two turns — every real call clears it long before the caller finishes spelling their member ID.</p>
 
     <div class="tbl rev" style="margin-top:20px">
       <table>
@@ -2296,6 +2321,8 @@ EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
         </tbody>
       </table>
     </div>
+
+    </div></details>
 
     <div class="callout rev">
       <p><strong>Making it opt-in was the actual decision.</strong> The flags live in config (<code>llm.cache_system</code>, <code>llm.cache_tools</code>) with defaults in the template, and <code>create_llm_client(..., cache=True)</code> reads them only at the session LLMs and the RAG LLM. The ticket summary, supervisor briefing and escalation reason call it without <code>cache</code>: a one-shot call writes the cache at 1.25× and never reads it back, so caching it is pure cost. A tenant config that omits the flags simply runs uncached, which makes rollout a per-agent decision rather than a silent default.</p>
@@ -2319,7 +2346,9 @@ EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
 
     </div></details>
 <div class="seclabel rev" style="margin-top:44px">The Pipeline Reads an Object, Not a Transcript</div>
-    <div class="mstrip rev">
+    <p class="sub rev" style="margin-bottom:14px">The handoff is a validated JSON object built during the call, so the pipeline reads fields, never prose. The full cost investigation is under <a href="#tco">Cost Investigation</a>.</p>
+    <details class="deep"><summary>The handoff object · detail</summary><div class="deepbody">
+<div class="mstrip rev">
       <div class="m"><span class="mv sm">during</span><span class="ml">Record built mid-call, not extracted after</span></div>
       <div class="m"><span class="mv">1</span><span class="ml">Schema, vendored — agent and pipeline share it</span></div>
       <div class="m"><span class="mv">0</span><span class="ml">Extra LLM passes over the transcript</span></div>
@@ -2334,6 +2363,8 @@ EPSDT · FQHC · HDHP · SLCSP · TTY</pre></div>
       </ul>
     </div>
     <p>The alternative — hand the pipeline a transcript and have it extract fields with another model call — costs a second full pass over the conversation per call and introduces a second place the extraction can be wrong. Building the object during the call makes the handoff <strong>free at the boundary</strong> and gives the caller a chance to correct a field while they're still on the line.</p>
+
+    </div></details>
 
     <div class="diagram rev">
       <div class="dhead"><span>two outputs per call · neither is the transcript</span><span class="tag">structured at the boundary</span></div>
@@ -2359,7 +2390,7 @@ flowchart LR
 <!-- TCO -->
 <section id="tco">
   <div class="wrap">
-    <div class="seclabel rev">Priced Stack · STT · TTS · LLM</div>
+    <div class="seclabel rev">Cost Investigation · STT · TTS · LLM</div>
     <h2 class="rev">What One Call Actually Costs, and What I Could Prove</h2>
     <p class="sub rev" style="margin-bottom:16px">I opened this as a cost investigation: <em>why does one intake call cost $1.30?</em> It came back with three things I did not go looking for:</p>
     <ul class="lst lead rev">
@@ -2373,7 +2404,7 @@ flowchart LR
       <div class="m"><span class="mv">$1.3024</span><span class="ml">Measured AWS cost per call — priced from billed usage</span></div>
       <div class="m"><span class="mv">$0.7597</span><span class="ml">Costed target — <strong>&minus;42%</strong>, lever by lever</span></div>
       <div class="m"><span class="mv sm">~$65k/yr</span><span class="ml">At 30,000 calls a quarter (120,000 a year) — LiveKit and carrier excluded from both columns</span></div>
-      <div class="m"><span class="mv amb">86%</span><span class="ml">Of LLM spend is re-sent conversation context</span></div>
+      <div class="m"><span class="mv amb">56%</span><span class="ml">Of LLM spend is re-sent conversation history (86% counting cached-prefix re-reads)</span></div>
       <div class="m"><span class="mv bad">4 / 10</span><span class="ml">Core claims <strong>refuted</strong> under red team</span></div>
       <div class="m"><span class="mv sm">per lever</span><span class="ml">Every dollar in the target column has a named change behind it</span></div>
     </div>
@@ -2386,6 +2417,8 @@ flowchart LR
         <li>Print the caveats <strong>beside</strong> the number, not in an appendix — including the ones that make the number look worse.</li>
       </ul>
     </div>
+
+    <p class="sub rev" style="margin-bottom:16px"><strong>Phases used below:</strong> 7a = cache the conversation history · 8 = restructure the prompt prefix · 9 = route cheap turns to a smaller model.</p>
 
     <div class="diagram rev">
       <div class="dhead"><span>where the dollars sit · one intake call</span><span class="tag">baseline left, target right</span></div>
@@ -2564,24 +2597,6 @@ flowchart LR
         </div>
         <p><strong>The acceptance criterion did not merely permit the defect — it mandated it, and the oracle would have reported success.</strong> And the thing being broken was the regression suite that would have caught it. Found by cross-referencing every call site against whether its module reaches the normalizer; <em>not</em> by re-reading the plan, which had already confirmed the error twice.</p>
       </div>
-      <div class="card warn">
-        <div class="k">Discipline · what makes the ledger honest</div>
-        <h3>The suite encoded the bug as the specification</h3>
-        <div class="mstrip">
-          <div class="m"><span class="mv amb">~20</span><span class="ml">Tests asserting the markup was correct output</span></div>
-          <div class="m"><span class="mv bad">0</span><span class="ml">Tests touching <code>text_type</code> — the boundary the defect lives on</span></div>
-          <div class="m"><span class="mv">95 / 59</span><span class="ml">Pre-existing pytest failures / ruff errors on the merge base</span></div>
-          <div class="m"><span class="mv bad">18 vs 2</span><span class="ml">Same module, full suite vs isolated — leaked global state</span></div>
-        </div>
-        <div class="appr"><b>Approach</b>
-          <ul>
-            <li>Roughly twenty tests asserted <code>&lt;break/&gt;</code> tags were the <em>expected</em> output and <strong>passed happily under the live defect</strong>. Zero tests covered the boundary where the defect actually lived.</li>
-            <li>The baseline was already red, so <strong>"green" had to be redefined as a differential</strong>: the failing <em>set</em> at this commit must be a subset of the set at the merge base, under an identical invocation. <strong>Set, not count</strong> — counts hide disjoint membership changes.</li>
-            <li>A module-scoped run <strong>under-reports by 16</strong> because of leaked module-singleton state, so it is not valid acceptance evidence. Reset fixture first; every criterion cites a full-suite run.</li>
-          </ul>
-        </div>
-        <p>The written record said <strong>12</strong> failures. The measured value was <strong>18</strong>. Capturing a baseline from prose rather than from a run would have seeded the oracle with a wrong expected set and passed while six failures went unaccounted for.</p>
-      </div>
     </div>
 
 
@@ -2596,12 +2611,12 @@ flowchart LR
 <section id="framework">
   <div class="wrap">
     <div class="seclabel rev">Decision Framework</div>
-    <h2 class="rev">Should We Build / Own This?</h2>
-    <p class="sub rev">Every issue above ended in a build-or-don't decision, and the way that decision gets made <strong>changes with company stage</strong>. The seven questions stay the same. The discriminating variable moves — and naming which regime you're in is most of the judgment.</p>
+    <h2 class="rev">How We Decide What to Build</h2>
+    <p class="sub rev">Build-or-don't calls came up throughout this work: the cost levers, the eval harness, the QA caller. How that decision gets made <strong>changes with company stage</strong>. The questions stay the same and the discriminating variable moves; naming which regime you're in is most of the judgment.</p>
 
     <div class="mstrip rev">
-      <div class="m"><span class="mv">7</span><span class="ml">Questions — identical in both regimes</span></div>
-      <div class="m"><span class="mv">7</span><span class="ml">Discriminating variables that swap out</span></div>
+      <div class="m"><span class="mv">7</span><span class="ml">Questions — same in both regimes (#4 folds into cost at scale)</span></div>
+      <div class="m"><span class="mv">6</span><span class="ml">Discriminating variables that swap out</span></div>
       <div class="m"><span class="mv">4</span><span class="ml">Value types that don't convert</span></div>
       <div class="m"><span class="mv amb">2</span><span class="ml">Of them lose every ROI argument</span></div>
       <div class="m"><span class="mv">5</span><span class="ml">Triggers that flip you back to rigor</span></div>
@@ -2614,6 +2629,7 @@ flowchart LR
       </ul>
     </div>
 
+    <details class="deep"><summary>The seven questions · large company vs startup</summary><div class="deepbody">
     <div class="tbl rev">
       <table>
         <thead><tr><th>#</th><th>Large company</th><th>Startup</th><th>Why it changes</th></tr></thead>
@@ -2629,7 +2645,9 @@ flowchart LR
       </table>
     </div>
 
-    <details class="deep"><summary>Value has four types · detail</summary><div class="deepbody">
+    </div></details>
+
+    <div class="seclabel rev" style="margin-top:42px">Value Has Four Types</div>
     <p class="sub rev" style="margin-bottom:18px">The most common prioritization error is comparing across these as if they were one currency. They aren't, and two of them lose every ROI argument they're entered into.</p>
     <div class="tbl rev">
       <table>
@@ -2638,7 +2656,7 @@ flowchart LR
           <tr><td>Direct revenue</td><td class="v">Does this close or keep a customer?</td><td class="v">Contested — needs an enablement argument through several hops</td><td class="v">One hop, immediately legible</td><td class="v">X12 278 / 834 / 837p support — payers require it</td></tr>
           <tr><td>Survival</td><td class="v">Does <em>not</em> having this kill us?</td><td class="v">A compliance org owns it and funds it separately</td><td class="v">Nobody owns it — so it must be taken off the board first</td><td class="v">The HIPAA gate; failing closed after 3 attempts</td></tr>
           <tr><td>Learning</td><td class="v">Does this tell us whether Y is worth it?</td><td class="v">Often a dedicated research or platform function</td><td class="v">The highest-leverage move — buy information instead of deciding</td><td class="v">The eval harness; the QA caller agent</td></tr>
-          <tr><td>Proof</td><td class="v">Does this unlock a raise or a logo?</td><td class="v">Rarely the point — the logo already exists</td><td class="v">Frequently the highest-value work in the building</td><td class="v">A defensible North Star that moved traffic 1% → 100%</td></tr>
+          <tr><td>Proof</td><td class="v">Does this unlock a raise or a logo?</td><td class="v">Rarely the point — the logo already exists</td><td class="v">Frequently the highest-value work in the building</td><td class="v">A defensible North Star that backed the traffic ramp</td></tr>
         </tbody>
       </table>
     </div>
@@ -2648,20 +2666,20 @@ flowchart LR
         <div class="k">Rule 1</div>
         <h3>Never let survival work compete on ROI</h3>
         <p>Compliance and security have <strong>no upside</strong> — they only avoid death. Scored on return they lose every time, and every time they should have won. Take them off the board first, then prioritize what's left.</p>
-        <div class="tie"><b>Applied here</b>The HIPAA gate, the 3-factor rule and the fail-closed escalation were never ranked against feature work. That's why they shipped.</div>
+        <div class="tie"><b>Applied here</b>The HIPAA gate, the 3-factor rule and the fail-closed escalation were never ranked against feature work. They shipped on their own track.</div>
       </div>
       <div class="card coral">
         <div class="k">Rule 2</div>
         <h3>Proof value is real and gets underweighted</h3>
         <p>Engineers discount it as "not real work". A credible number is often the sentence that raises the round or closes the logo — which makes it, at a startup, frequently the highest-leverage thing available.</p>
-        <div class="tie"><b>Applied here</b>Publishing the KPI's denominator wasn't a feature. It was the artifact that made the number arguable-with, and that's what moved the traffic ramp.</div>
+        <div class="tie"><b>Applied here</b>Publishing the KPI's denominator wasn't a feature. It was the artifact that made the number arguable-with, and that's what helped unlock the traffic ramp.</div>
       </div>
     </div>
 
     <div class="callout rev">
-      <p><strong>The regime switch is the actual skill.</strong> Run large-company process at a startup and you sound bureaucratic — charter analysis for a call three people could make in a hallway. Run startup speed logic at a large company and you sound reckless — "we'll rewrite it later" about a system with three hundred dependent teams. Either failure reads as incompetence from the other side.</p>
+      <p><strong>The regime switch is the actual skill.</strong> Run large-company process at a startup and you sound bureaucratic — charter analysis for a call three people could make in a hallway. Run startup speed logic at a large company and you sound reckless — "we'll rewrite it later" about a system with three hundred dependent teams. Either mismatch reads as poor judgment from the other side.</p>
       <p style="margin-top:12px">The triggers that flip you back: a second team could plausibly own it · external consumers with expectations · the first enterprise or compliance contract · the cost of being wrong exceeds the cost of deciding carefully · the thing outlives the person who built it. <strong>And the discount only ever applied to things you can throw away</strong> — anything load-bearing (data model, authz, tenancy, money movement, anything regulated) gets full rigor at any stage.</p>
-    </div></div></details>
+    </div>
 
   </div>
 </section>
