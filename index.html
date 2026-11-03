@@ -605,30 +605,47 @@ header.part .lede{font-size:clamp(14.5px,1.6vw,17px);max-width:840px}
 .sub{max-width:1040px}
 .lst.lead{max-width:1040px}
 .callout p{max-width:1040px}
+
+/* two-row nav */
+nav{flex-direction:column;align-items:stretch;gap:0;padding-top:10px;padding-bottom:10px}
+.navrow{display:flex;align-items:center;gap:20px}
+.navrow .navlinks{margin-left:auto;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.navlinks a[data-group]{padding:5px 12px;border-radius:30px;border:1px solid transparent}
+.navlinks a[data-group]::after{display:none}
+.navlinks a[data-group].on{color:var(--accent);border-color:var(--accent-dim);background:rgba(0,229,160,.07)}
+.navsub{display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.navsub[hidden]{display:none}
+.navsub a{flex:none;white-space:nowrap;font-family:var(--mono);font-size:11.5px;color:var(--muted);text-decoration:none;padding:3px 10px;border-radius:30px}
+.navsub a:hover{color:var(--accent)}
+.navsub a:first-child{margin-left:auto}
+.navsub a.on{color:var(--accent);background:rgba(0,229,160,.1)}
+section{scroll-margin-top:104px}
+@media(max-width:760px){
+  nav{padding:8px 16px}
+  .navrow{flex-wrap:wrap;gap:6px}
+  .navrow .navlinks{width:100%;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;scrollbar-width:none}
+  .navlinks a[data-group]{white-space:nowrap;flex:none}
+}
 </style>
 </head>
 <body id="top">
 
 <nav>
-  <span class="brand">BENEPOWER <b>//</b> GENAI</span>
-  <div class="navlinks">
-    <a href="#architecture">Platform</a>
-    <a href="#eval">RAG Eval</a>
-    <a href="#systems">Eval Systems</a>
-    <a href="#voice">Voice Agent</a>
-    <a href="#northstar">North Star</a>
-    <a href="#iq">IQ Score</a>
-    <a href="#ab">A/B</a>
-    <a href="#ticketing">Ticketing</a>
-    <a href="#migration">Celery → Airflow</a>
-    <a href="#pipeline">HIPAA / X12</a>
-    <a href="#integrity">Data Integrity</a>
-    <a href="#metrics">Impact</a>
-    <a href="#ownership">Ownership</a>
-    <a href="#deep-dives">Deep Dives</a>
-    <a href="#next">What's Next</a>
-    <button type="button" id="toggleDeep" class="deepbtn">Expand all</button>
+  <div class="navrow">
+    <span class="brand">BENEPOWER <b>//</b> GENAI</span>
+    <div class="navlinks" id="navgroups">
+      <a href="#architecture" data-group="platform">Platform</a>
+      <a href="#eval" data-group="evaluation">Evaluation</a>
+      <a href="#voice" data-group="voice">Voice Agent</a>
+      <a href="#northstar" data-group="metrics">Metrics</a>
+      <a href="#ticketing" data-group="backend">Backend</a>
+      <a href="#metrics" data-group="impact">Impact</a>
+      <a href="#deep-dives" data-group="deep">Deep Dives</a>
+      <a href="#next" data-group="next">What's Next</a>
+      <button type="button" id="toggleDeep" class="deepbtn">Expand all</button>
+    </div>
   </div>
+  <div class="navsub" id="navsub" hidden></div>
 </nav>
 
 <header>
@@ -2861,6 +2878,54 @@ flowchart LR
   });
   all().forEach(function(d){d.addEventListener('toggle',sync);});
   sync();
+})();
+</script>
+<script>
+(function(){
+  var G=[
+    {id:'platform',items:[['architecture','Architecture']]},
+    {id:'evaluation',items:[['eval','RAG Eval'],['systems','Eval Systems']]},
+    {id:'voice',items:[['voice','Voice Agent']]},
+    {id:'metrics',items:[['northstar','North Star'],['iq','IQ Score'],['ab','A/B']]},
+    {id:'backend',items:[['ticketing','Ticketing'],['migration','Celery \u2192 Airflow'],['pipeline','HIPAA / X12'],['integrity','Data Integrity']]},
+    {id:'impact',items:[['metrics','Impact'],['ownership','Ownership']]},
+    {id:'deep',items:[['deep-dives','Overview'],['attribution','Attribution'],['stt','STT'],['tts','TTS'],['dictionaries','Dictionaries'],['cost','Cost / Latency'],['tco','Cost Investigation'],['framework','How We Decide']]},
+    {id:'next',items:[['next',"What's Next"]]}
+  ];
+  var groupOf={};G.forEach(function(g){g.items.forEach(function(it){groupOf[it[0]]=g;});});
+  var ids=Object.keys(groupOf);
+  var tops=document.querySelectorAll('#navgroups a[data-group]');
+  var sub=document.getElementById('navsub');
+  var cur=null,curSec=null;
+  function render(g,sec){
+    tops.forEach(function(a){a.classList.toggle('on',!!g&&a.getAttribute('data-group')===g.id);});
+    if(!g||g.items.length<2){sub.hidden=true;sub.textContent='';cur=g&&g.id;return;}
+    if(cur!==g.id){
+      sub.textContent='';
+      g.items.forEach(function(it){var a=document.createElement('a');a.href='#'+it[0];a.textContent=it[1];a.setAttribute('data-sec',it[0]);sub.appendChild(a);});
+      cur=g.id;
+    }
+    sub.hidden=false;
+    sub.querySelectorAll('a').forEach(function(a){
+      var on=a.getAttribute('data-sec')===sec;a.classList.toggle('on',on);
+      if(on&&sub.scrollWidth>sub.clientWidth){sub.scrollLeft=a.offsetLeft-12;}
+    });
+  }
+  function spy(){
+    var y=130,found=null;
+    for(var i=0;i<ids.length;i++){
+      var el=document.getElementById(ids[i]);
+      if(el&&el.getBoundingClientRect().top<=y){found=ids[i];}
+    }
+    var ref=document.getElementById('references');
+    if(ref&&ref.getBoundingClientRect().top<=y){found=null;}
+    if(found===curSec)return;
+    curSec=found;render(found?groupOf[found]:null,found);
+  }
+  var t=null;
+  window.addEventListener('scroll',function(){if(t)return;t=setTimeout(function(){t=null;spy();},60);},{passive:true});
+  window.addEventListener('resize',spy);
+  spy();
 })();
 </script>
 </body>
