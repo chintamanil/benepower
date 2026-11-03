@@ -1642,13 +1642,12 @@ flowchart LR
   <div class="wrap">
     <span class="role">Production Issues · Voice Intake Agent</span>
     <h1 class="hero">THE BUGS THAT ONLY<br><span class="g">EXIST ON THE PHONE</span></h1>
-    <p class="lede">A voice agent taking precertification intake for <strong>a TPA client</strong> fails in ways no other software does. The transcript says one thing and the audio says another. A caller reads a member ID and four different systems disagree about what they heard. A dash gets pronounced as the digit two, and a CSR writes down the wrong ticket number.</p>
-    <p class="lede">This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how we found it, and the dictionaries and configs that now hold the fixes in place.</p>
+    <p class="lede">A voice agent taking precertification intake fails in ways no other software does: the transcript says one thing and the audio says another, and a dash read aloud becomes the digit two.</p>
+    <p class="lede">This is the catalogue: what broke, which <strong>layer</strong> it actually broke in, how it was found, and the configs that now hold the fixes in place.</p>
     <div class="stats">
       <div class="stat"><div class="n">4 layers</div><div class="l">STT · prompt · TTS · code — one symptom, four possible owners</div></div>
       <div class="stat"><div class="n">6 stages</div><div class="l">Ordered TTS normalization transform — order itself caused bugs</div></div>
-      <div class="stat"><div class="n">3 dicts</div><div class="l">Alphabet · pronunciation · digit maps, versioned per tenant in config</div></div>
-      <div class="stat"><div class="n sm">Listening loop</div><div class="l">Some defects are invisible in logs and transcripts. You have to hear them</div></div>
+      <div class="stat"><div class="n">3 dicts</div><div class="l">Alphabet · pronunciation · digit maps, versioned in config</div></div>
       <div class="stat"><div class="n sm">$1.30 → $0.76</div><div class="l">AWS cost per intake call — priced from billed usage, with a costed path to &minus;42%</div></div>
     </div>
     <div class="partnav rev"><a href="#attribution">Attribution</a><a href="#stt">STT</a><a href="#tts">TTS</a><a href="#dictionaries">Dictionaries</a><a href="#cost">Cost / Latency</a><a href="#tco">Priced Stack</a><a href="#framework">Build / Own</a></div>
@@ -2511,7 +2510,7 @@ flowchart LR
 
     </div></details>
 <details class="deep"><summary>What the red team refuted, including mine · detail</summary><div class="deepbody">
-    <p class="rev">I ran a five-lens adversarial review against my own investigation before it went anywhere near the client. Verdict: <strong>REQUEST CHANGES</strong>. Ten core claims: four proven, two unproven, <strong>four refuted</strong>.</p>
+    <p class="rev">I ran a five-lens adversarial review against my own investigation before it went anywhere near a decision. Verdict: <strong>REQUEST CHANGES</strong>. Ten core claims: four proven, two unproven, <strong>four refuted</strong>.</p>
     <div class="tbl rev">
       <table>
         <thead><tr><th>Claim I made</th><th>Verdict</th><th>What was actually true</th></tr></thead>
